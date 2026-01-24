@@ -15,6 +15,7 @@ class Call(Base):
     # Caller information
     caller_name = Column(String, nullable=True)
     caller_phone = Column(String, nullable=True)
+    caller_gender = Column(String, nullable=True)
     caller_region_id = Column(Integer, ForeignKey("regions.id"), nullable=True)
     caller_department_id = Column(Integer, ForeignKey("departments.id"), nullable=True)
     

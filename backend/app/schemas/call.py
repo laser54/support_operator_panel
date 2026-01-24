@@ -6,6 +6,7 @@ class CallBase(BaseModel):
     """Base call schema."""
     caller_name: str | None = None
     caller_phone: str | None = None
+    caller_gender: str | None = None
     caller_region_id: int | None = None
     caller_department_id: int | None = None
     topic: str | None = None

@@ -30,6 +30,7 @@ const callSchema = z.object({
     department_id: z.string().min(1, 'Department is required'),
     applicant_name: z.string().min(2, 'Name is required'),
     phone_number: z.string().optional(),
+    caller_gender: z.string().optional(),
     description: z.string().min(5, 'Description is required'),
     duration_seconds: z.number().int().min(0).optional(),
 });
@@ -40,7 +41,7 @@ function formatDuration(seconds: number): string {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
     const secs = seconds % 60;
-    
+
     if (hours > 0) {
         return `${hours}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
     }
@@ -67,6 +68,7 @@ export function CallForm() {
             department_id: '',
             applicant_name: '',
             phone_number: '',
+            caller_gender: '',
             description: '',
             duration_seconds: undefined,
         },
@@ -141,14 +143,14 @@ export function CallForm() {
     useEffect(() => {
         // Don't auto-start if timer is already running or was stopped
         if (isTimerRunning || isTimerStopped) return;
-        
+
         // Check if any field has meaningful content
-        const hasContent = 
-            selectedRegionId || 
-            applicantName.trim().length > 0 || 
-            (phoneNumber && phoneNumber.trim().length > 0) || 
+        const hasContent =
+            selectedRegionId ||
+            applicantName.trim().length > 0 ||
+            (phoneNumber && phoneNumber.trim().length > 0) ||
             description.trim().length > 0;
-        
+
         if (hasContent) {
             setIsTimerRunning(true);
             setIsTimerStopped(false);
@@ -210,6 +212,7 @@ export function CallForm() {
             const payload = {
                 caller_name: data.applicant_name,
                 caller_phone: data.phone_number,
+                caller_gender: data.caller_gender || null,
                 caller_region_id: data.region_id ? parseInt(data.region_id) : null,
                 caller_department_id: data.department_id ? parseInt(data.department_id) : null,
                 topic: 'General', // TODO: Add field for topic
@@ -252,12 +255,12 @@ export function CallForm() {
 
     function handleConfirmSave() {
         if (!pendingFormData) return;
-        
+
         const finalData = {
             ...pendingFormData,
             duration_seconds: editingDurationSeconds,
         };
-        
+
         setShowConfirmDialog(false);
         submitMutation.mutate(finalData);
     }
@@ -281,10 +284,10 @@ export function CallForm() {
                         <div>
                             <h3 className="text-sm font-semibold text-foreground">Длительность звонка</h3>
                             <p className="text-xs text-muted-foreground mt-0.5">
-                                {isTimerRunning 
-                                    ? 'Таймер работает...' 
-                                    : isTimerStopped 
-                                        ? 'Таймер остановлен' 
+                                {isTimerRunning
+                                    ? 'Таймер работает...'
+                                    : isTimerStopped
+                                        ? 'Таймер остановлен'
                                         : 'Нажмите Start для начала отсчета'}
                             </p>
                         </div>
@@ -336,20 +339,19 @@ export function CallForm() {
                             )}
                         </div>
                     </div>
-                    
+
                     <div className="space-y-4">
                         <div className="flex justify-center">
-                            <div className={`text-5xl font-mono font-bold tabular-nums ${
-                                isTimerRunning 
-                                    ? 'text-green-600 dark:text-green-400' 
-                                    : isTimerStopped 
-                                        ? 'text-blue-600 dark:text-blue-400' 
-                                        : 'text-muted-foreground'
-                            }`}>
+                            <div className={`text-5xl font-mono font-bold tabular-nums ${isTimerRunning
+                                ? 'text-green-600 dark:text-green-400'
+                                : isTimerStopped
+                                    ? 'text-blue-600 dark:text-blue-400'
+                                    : 'text-muted-foreground'
+                                }`}>
                                 {formatDuration(elapsedSeconds)}
                             </div>
                         </div>
-                        
+
                         {isTimerStopped && (
                             <div className="flex flex-col gap-2 pt-3 border-t">
                                 <label className="text-xs font-medium text-muted-foreground text-center mb-1">
@@ -446,8 +448,8 @@ export function CallForm() {
                                             </SelectItem>
                                         ) : filteredDepartments.length === 0 ? (
                                             <SelectItem value="__empty" disabled>
-                                                {!selectedRegionId 
-                                                    ? 'Сначала выберите регион' 
+                                                {!selectedRegionId
+                                                    ? 'Сначала выберите регион'
                                                     : 'Нет департаментов для этого региона'}
                                             </SelectItem>
                                         ) : (
@@ -487,6 +489,49 @@ export function CallForm() {
                             <FormLabel>Phone Number</FormLabel>
                             <FormControl>
                                 <Input placeholder="+1 234 567 890" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+
+                <FormField
+                    control={form.control}
+                    name="caller_gender"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Пол звонившего</FormLabel>
+                            <FormControl>
+                                <div className="flex gap-2">
+                                    <Button
+                                        type="button"
+                                        variant={field.value === 'М' ? 'default' : 'outline'}
+                                        className={`flex-1 ${field.value === 'М' ? 'bg-blue-600 hover:bg-blue-700' : ''}`}
+                                        onClick={() => field.onChange('М')}
+                                    >
+                                        М (Мужской)
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        variant={field.value === 'Ж' ? 'default' : 'outline'}
+                                        className={`flex-1 ${field.value === 'Ж' ? 'bg-pink-600 hover:bg-pink-700' : ''}`}
+                                        onClick={() => field.onChange('Ж')}
+                                    >
+                                        Ж (Женский)
+                                    </Button>
+                                    {field.value && (
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="icon"
+                                            onClick={() => field.onChange('')}
+                                            className="shrink-0"
+                                            title="Сбросить выбор"
+                                        >
+                                            ✕
+                                        </Button>
+                                    )}
+                                </div>
                             </FormControl>
                             <FormMessage />
                         </FormItem>

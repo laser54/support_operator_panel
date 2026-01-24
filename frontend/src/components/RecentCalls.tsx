@@ -42,7 +42,17 @@ export function RecentCalls() {
                         calls?.map((call: any) => (
                             <div key={call.id} className="flex flex-col space-y-1 border-b pb-2 last:border-0 last:pb-0">
                                 <div className="flex justify-between items-start">
-                                    <span className="font-semibold text-sm">{call.applicant_name || 'Anonymous'}</span>
+                                    <div className="flex items-center gap-1.5">
+                                        <span className="font-semibold text-sm">{call.caller_name || 'Anonymous'}</span>
+                                        {call.caller_gender && (
+                                            <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${call.caller_gender === 'М'
+                                                    ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
+                                                    : 'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-300'
+                                                }`}>
+                                                {call.caller_gender}
+                                            </span>
+                                        )}
+                                    </div>
                                     <span className="text-[10px] text-muted-foreground">
                                         {format(new Date(call.created_at), 'HH:mm dd.MM')}
                                     </span>
