@@ -8,8 +8,10 @@ class CallBase(BaseModel):
     caller_phone: str | None = None
     caller_region_id: int | None = None
     caller_department_id: int | None = None
+    topic: str | None = None
     question: str
     solution: str | None = None
+    status: str = "closed"
 
 
 class CallCreate(CallBase):

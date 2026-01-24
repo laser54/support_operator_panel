@@ -19,11 +19,13 @@ class Call(Base):
     caller_department_id = Column(Integer, ForeignKey("departments.id"), nullable=True)
     
     # Call details
+    topic = Column(String, nullable=True)
     question = Column(Text, nullable=False)
     solution = Column(Text, nullable=True)
+    status = Column(String, default="closed", nullable=False)
     
     # Metadata
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
 
     # Relationships
     operator = relationship("User", backref="calls")

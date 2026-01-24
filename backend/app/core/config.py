@@ -22,5 +22,9 @@ class Settings(BaseSettings):
     # CORS
     FRONTEND_URL: str = "http://localhost:5173"
 
+    # External Services
+    KNOWLEDGE_BASE_URL: str = "https://qa.larin.work"
+    KNOWLEDGE_BASE_PASSWORD: str = "Parol1234"
+
 
 settings = Settings()

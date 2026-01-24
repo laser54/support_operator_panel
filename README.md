@@ -120,6 +120,30 @@ curl -X GET "http://localhost:8000/api/v1/regions" \
   -H "Authorization: Bearer $TOKEN"
 ```
 
+## ⚙️ Configuration & Environments
+
+### Environment Variables (.env)
+
+**Backend:**
+Copy `.env.example` to `.env`:
+```ini
+DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/support_panel
+SECRET_KEY=...
+FRONTEND_URL=http://localhost:5173
+```
+
+**Frontend:**
+Create `frontend/.env`:
+```ini
+VITE_API_URL=http://localhost:8888/api/v1
+```
+For QA/Production, update `VITE_API_URL` accordingly.
+
+### External Resources
+- **External Knowledge Base**: Configured via `KNOWLEDGE_BASE_URL` in `.env`.
+  - *Note: This is the source for the Q&A database.*
+  - Do NOT hardcode this URL. Use environment variables if integration is needed.
+
 ## 📁 Структура проекта
 
 ```

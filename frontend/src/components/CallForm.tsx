@@ -19,7 +19,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/api/client';
 import { toast } from 'sonner';
 
@@ -55,22 +55,29 @@ export function CallForm() {
         queryFn: async () => (await api.get('/departments/')).data,
     });
 
+    const queryClient = useQueryClient();
+
     const submitMutation = useMutation({
         mutationFn: async (data: CallFormValues) => {
-            // Assuming there is an endpoint to create a call, though not explicitly in Phase 1 plan but implied in Phase 2 "Submit form"
-            // Since backend might not have it yet, we will just log it for now or assume /calls/
-            // Checking the plan, "Сабмит формы (сохранение звонка)" is Phase 3 item 4.
-            // So for Phase 2 strict plan, we just need the form UI.
-            // But let's try to post to a placeholder or wait.
-            // I'll make it a console log for now as per "Core UI" phase focus.
-            console.log('Submitting call:', data);
-            await new Promise(resolve => setTimeout(resolve, 1000)); // Mock delay
+            const payload = {
+                applicant_name: data.applicant_name,
+                caller_phone: data.phone_number,
+                caller_region_id: data.region_id ? parseInt(data.region_id) : null,
+                caller_department_id: data.department_id ? parseInt(data.department_id) : null,
+                topic: 'General', // TODO: Add field for topic
+                question: data.description,
+                status: 'open'
+            };
+            const response = await api.post('/calls/', payload);
+            return response.data;
         },
         onSuccess: () => {
-            toast.success('Call saved locally (Mock)');
+            toast.success('Call saved successfully');
+            queryClient.invalidateQueries({ queryKey: ['calls'] });
             form.reset();
         },
-        onError: () => {
+        onError: (error) => {
+            console.error(error);
             toast.error('Failed to save call');
         }
     });
