@@ -1,0 +1,18 @@
+[project]
+name = "support-operator-panel-backend"
+version = "0.1.0"
+description = "Backend for Support Operator Panel"
+dependencies = [
+    "fastapi",
+    "uvicorn",
+    "sqlalchemy",
+    "alembic",
+    "pydantic",
+    "pydantic-settings"
+]
+
+[tool.uv]
+dev-dependencies = [
+    "pytest",
+    "ruff"
+]
