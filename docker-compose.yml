@@ -25,7 +25,7 @@ services:
     volumes:
       - ./backend:/app
     ports:
-      - "8000:8000"
+      - "8888:8000"
     environment:
       - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/support_panel
       - SECRET_KEY=dev-secret-key-change-in-production
@@ -45,7 +45,7 @@ services:
     ports:
       - "5173:5173"
     environment:
-      - VITE_API_URL=http://localhost:8000
+      - VITE_API_URL=http://localhost:8888/api/v1
 
 volumes:
   postgres_data:
