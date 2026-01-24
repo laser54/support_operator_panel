@@ -23,6 +23,7 @@ class Call(Base):
     question = Column(Text, nullable=False)
     solution = Column(Text, nullable=True)
     status = Column(String, default="closed", nullable=False)
+    duration_seconds = Column(Integer, nullable=True)
     
     # Metadata
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)

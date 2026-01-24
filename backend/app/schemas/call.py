@@ -12,6 +12,7 @@ class CallBase(BaseModel):
     question: str
     solution: str | None = None
     status: str = "closed"
+    duration_seconds: int | None = None
 
 
 class CallCreate(CallBase):
