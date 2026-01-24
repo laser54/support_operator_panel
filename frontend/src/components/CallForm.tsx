@@ -1,3 +1,4 @@
+import { useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -55,12 +56,34 @@ export function CallForm() {
         queryFn: async () => (await api.get('/departments/')).data,
     });
 
+    const selectedRegionId = form.watch('region_id');
+    const isDepartmentDisabled = !selectedRegionId || (departments?.length ?? 0) === 0;
+    const filteredDepartments = useMemo(() => {
+        if (!departments) return [];
+        if (!selectedRegionId) return departments;
+        const regionId = parseInt(selectedRegionId, 10);
+        return departments.filter((d: any) => d.region_id === regionId);
+    }, [departments, selectedRegionId]);
+
+    useEffect(() => {
+        if (!selectedRegionId) return;
+        const currentDeptId = form.getValues('department_id');
+        if (!currentDeptId) return;
+        const regionId = parseInt(selectedRegionId, 10);
+        const hasDepartment = departments?.some(
+            (d: any) => d.region_id === regionId && String(d.id) === currentDeptId
+        );
+        if (!hasDepartment) {
+            form.setValue('department_id', '');
+        }
+    }, [departments, form, selectedRegionId]);
+
     const queryClient = useQueryClient();
 
     const submitMutation = useMutation({
         mutationFn: async (data: CallFormValues) => {
             const payload = {
-                applicant_name: data.applicant_name,
+                caller_name: data.applicant_name,
                 caller_phone: data.phone_number,
                 caller_region_id: data.region_id ? parseInt(data.region_id) : null,
                 caller_department_id: data.department_id ? parseInt(data.department_id) : null,
@@ -96,7 +119,7 @@ export function CallForm() {
                         render={({ field }) => (
                             <FormItem>
                                 <FormLabel>Region</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <Select value={field.value} onValueChange={field.onChange}>
                                     <FormControl>
                                         <SelectTrigger>
                                             <SelectValue placeholder="Select region" />
@@ -121,18 +144,34 @@ export function CallForm() {
                         render={({ field }) => (
                             <FormItem>
                                 <FormLabel>Department</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <Select
+                                    value={field.value}
+                                    onValueChange={field.onChange}
+                                    disabled={isDepartmentDisabled}
+                                >
                                     <FormControl>
                                         <SelectTrigger>
-                                            <SelectValue placeholder="Select department" />
+                                            <SelectValue
+                                                placeholder={
+                                                    isDepartmentDisabled
+                                                        ? 'Select region first'
+                                                        : 'Select department'
+                                                }
+                                            />
                                         </SelectTrigger>
                                     </FormControl>
                                     <SelectContent>
-                                        {departments?.map((d: any) => (
-                                            <SelectItem key={d.id} value={String(d.id)}>
-                                                {d.name}
+                                        {filteredDepartments.length === 0 ? (
+                                            <SelectItem value="__empty" disabled>
+                                                No departments available
                                             </SelectItem>
-                                        ))}
+                                        ) : (
+                                            filteredDepartments.map((d: any) => (
+                                                <SelectItem key={d.id} value={String(d.id)}>
+                                                    {d.name}
+                                                </SelectItem>
+                                            ))
+                                        )}
                                     </SelectContent>
                                 </Select>
                                 <FormMessage />
