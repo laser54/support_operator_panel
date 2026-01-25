@@ -50,7 +50,7 @@
 
 4. **Проверьте работу**:
    - API Docs: http://localhost:8000/docs
-   - Frontend: http://localhost:5173
+   - Frontend: http://localhost:3001
    - Health check: http://localhost:8000/
 
 **Тестовые данные:**
@@ -136,6 +136,7 @@ FRONTEND_URL=http://localhost:5173
 Create `frontend/.env`:
 ```ini
 VITE_API_URL=http://localhost:8888/api/v1
+FRONTEND_URL=http://localhost:3001
 ```
 For QA/Production, update `VITE_API_URL` accordingly.
 

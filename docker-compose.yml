@@ -29,7 +29,7 @@ services:
     environment:
       - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/support_panel
       - SECRET_KEY=dev-secret-key-change-in-production
-      - FRONTEND_URL=http://localhost:5173
+      - FRONTEND_URL=http://localhost:3001
     depends_on:
       db:
         condition: service_healthy
@@ -43,7 +43,7 @@ services:
       - ./frontend:/app
       - /app/node_modules
     ports:
-      - "5173:5173"
+      - "3001:5173"
     environment:
       - VITE_API_URL=http://localhost:8888/api/v1
 

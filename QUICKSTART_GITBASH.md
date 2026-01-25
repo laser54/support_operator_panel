@@ -21,7 +21,7 @@ docker-compose exec db psql -U postgres -d support_panel -c "INSERT INTO users (
 
 ### 4. Проверьте работу:
 - API Docs: http://localhost:8000/docs
-- Frontend: http://localhost:5173
+- Frontend: http://localhost:3001
 - Логин: `admin` / `admin`
 
 ## 📋 Полезные команды
