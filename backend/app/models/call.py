@@ -1,5 +1,6 @@
 from sqlalchemy import Column, Integer, String, Text, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
+from app.models.script import Script
 from datetime import datetime, timezone
 
 from app.db.session import Base
@@ -18,6 +19,9 @@ class Call(Base):
     caller_gender = Column(String, nullable=True)
     caller_region_id = Column(Integer, ForeignKey("regions.id"), nullable=True)
     caller_department_id = Column(Integer, ForeignKey("departments.id"), nullable=True)
+
+    # Script / Solution source
+    script_id = Column(Integer, ForeignKey("scripts.id"), nullable=True)
     
     # Call details
     topic = Column(String, nullable=True)
@@ -33,3 +37,4 @@ class Call(Base):
     operator = relationship("User", backref="calls")
     region = relationship("Region")
     department = relationship("Department")
+    script = relationship("Script")

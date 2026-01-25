@@ -24,6 +24,7 @@ import {
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/api/client';
 import { toast } from 'sonner';
+import { ScriptSelector, type ScriptSelection } from '@/components/ScriptSelector';
 
 const callSchema = z.object({
     region_id: z.string().min(1, 'Region is required'),
@@ -48,7 +49,12 @@ function formatDuration(seconds: number): string {
     return `${minutes}:${String(secs).padStart(2, '0')}`;
 }
 
-export function CallForm() {
+interface CallFormProps {
+    externalSelectedScript?: ScriptSelection | null;
+    onClearExternalScript?: () => void;
+}
+
+export function CallForm({ externalSelectedScript, onClearExternalScript }: CallFormProps) {
     const [isTimerRunning, setIsTimerRunning] = useState(false);
     const [elapsedSeconds, setElapsedSeconds] = useState(0);
     const [isTimerStopped, setIsTimerStopped] = useState(false);
@@ -60,6 +66,7 @@ export function CallForm() {
     const [editingSeconds, setEditingSeconds] = useState(0);
     const intervalRef = useRef<number | null>(null);
     const startTimeRef = useRef<number | null>(null);
+    const [scriptData, setScriptData] = useState<ScriptSelection | null>(null);
 
     const form = useForm<CallFormValues>({
         resolver: zodResolver(callSchema),
@@ -139,6 +146,22 @@ export function CallForm() {
         }
     }, [departments, form, selectedRegionId]);
 
+    // Sync with external script selection
+    useEffect(() => {
+        if (externalSelectedScript) {
+            setScriptData(externalSelectedScript);
+            const question = externalSelectedScript.question || '';
+            form.setValue('description', question);
+        }
+    }, [externalSelectedScript, form]);
+
+    // Clear external if our local scriptData changes to null (e.g. user clicked change in ScriptSelector)
+    useEffect(() => {
+        if (scriptData === null && externalSelectedScript && onClearExternalScript) {
+            onClearExternalScript();
+        }
+    }, [scriptData, externalSelectedScript, onClearExternalScript]);
+
     // Auto-start timer when user starts filling the form
     useEffect(() => {
         // Don't auto-start if timer is already running or was stopped
@@ -217,6 +240,8 @@ export function CallForm() {
                 caller_department_id: data.department_id ? parseInt(data.department_id) : null,
                 topic: 'General', // TODO: Add field for topic
                 question: data.description,
+                solution: scriptData?.answer || null,
+                script: scriptData,
                 status: 'open',
                 duration_seconds: data.duration_seconds ?? null,
             };
@@ -233,6 +258,7 @@ export function CallForm() {
             setShowConfirmDialog(false);
             setPendingFormData(null);
             setIsEditingDuration(false);
+            setScriptData(null);
             startTimeRef.current = null;
         },
         onError: (error) => {
@@ -537,6 +563,19 @@ export function CallForm() {
                         </FormItem>
                     )}
                 />
+
+                <div className="space-y-2 mb-4">
+                    <FormLabel>Script / Knowledge Base</FormLabel>
+                    <ScriptSelector
+                        selectedScript={scriptData}
+                        onSelect={(s) => {
+                            setScriptData(s);
+                            if (s) {
+                                form.setValue('description', s.question);
+                            }
+                        }}
+                    />
+                </div>
 
                 <FormField
                     control={form.control}

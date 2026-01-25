@@ -1,5 +1,6 @@
 from datetime import datetime
 from pydantic import BaseModel, ConfigDict
+from app.schemas.script import ScriptInput, ScriptRead
 
 
 class CallBase(BaseModel):
@@ -18,7 +19,7 @@ class CallBase(BaseModel):
 
 class CallCreate(CallBase):
     """Call creation schema."""
-    pass
+    script: ScriptInput | None = None
 
 
 class CallRead(CallBase):
@@ -26,5 +27,8 @@ class CallRead(CallBase):
     id: int
     operator_id: int
     created_at: datetime
+
+
+    script: ScriptRead | None = None
 
     model_config = ConfigDict(from_attributes=True)

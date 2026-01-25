@@ -8,7 +8,13 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Search, Copy, Check } from 'lucide-react';
 import { toast } from 'sonner';
 
-export function SearchPanel() {
+import type { ScriptSelection } from '@/components/ScriptSelector';
+
+interface SearchPanelProps {
+    onSelectScript?: (script: ScriptSelection) => void;
+}
+
+export function SearchPanel({ onSelectScript }: SearchPanelProps) {
     const [query, setQuery] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
     const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -33,6 +39,19 @@ export function SearchPanel() {
         setCopiedId(id);
         toast.success('Solution copied to clipboard');
         setTimeout(() => setCopiedId(null), 2000);
+    };
+
+    const handleUseSolution = (match: any) => {
+        if (onSelectScript) {
+            onSelectScript({
+                external_id: match.id,
+                question: match.question,
+                answer: match.answer,
+                is_custom: false,
+                needs_review: false
+            });
+            toast.success('Script linked to call form');
+        }
     };
 
     return (
@@ -84,14 +103,26 @@ export function SearchPanel() {
                     <div key={match.id} className="mb-4 bg-white rounded-lg border p-4 shadow-sm hover:border-primary/50 transition-colors group">
                         <div className="flex justify-between items-start mb-2">
                             <h4 className="font-semibold text-sm text-primary">Q: {match.question}</h4>
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8"
-                                onClick={() => copyToClipboard(match.answer, match.id)}
-                            >
-                                {copiedId === match.id ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
-                            </Button>
+                            <div className="flex gap-1">
+                                {onSelectScript && (
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="h-8 text-xs"
+                                        onClick={() => handleUseSolution(match)}
+                                    >
+                                        Use Answer
+                                    </Button>
+                                )}
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8"
+                                    onClick={() => copyToClipboard(match.answer, match.id)}
+                                >
+                                    {copiedId === match.id ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                                </Button>
+                            </div>
                         </div>
                         <div className="text-sm text-slate-700 whitespace-pre-wrap bg-slate-50 p-3 rounded border-l-4 border-l-primary/30">
                             {match.answer}
