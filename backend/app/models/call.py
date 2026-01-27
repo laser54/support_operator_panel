@@ -27,6 +27,7 @@ class Call(Base):
     topic = Column(String, nullable=True)
     question = Column(Text, nullable=False)
     solution = Column(Text, nullable=True)
+    notes = Column(Text, nullable=True)  # Operator's notes/comments
     status = Column(String, default="closed", nullable=False)
     duration_seconds = Column(Integer, nullable=True)
     

@@ -67,6 +67,7 @@ export function CallForm({ externalSelectedScript, onClearExternalScript }: Call
     const intervalRef = useRef<number | null>(null);
     const startTimeRef = useRef<number | null>(null);
     const [scriptData, setScriptData] = useState<ScriptSelection | null>(null);
+    const [operatorNotes, setOperatorNotes] = useState('');
 
     const form = useForm<CallFormValues>({
         resolver: zodResolver(callSchema),
@@ -241,8 +242,9 @@ export function CallForm({ externalSelectedScript, onClearExternalScript }: Call
                 topic: 'General', // TODO: Add field for topic
                 question: data.description,
                 solution: scriptData?.answer || null,
+                notes: operatorNotes || null,
                 script: scriptData,
-                status: 'open',
+                status: 'closed',
                 duration_seconds: data.duration_seconds ?? null,
             };
             const response = await api.post('/calls/', payload);
@@ -259,6 +261,7 @@ export function CallForm({ externalSelectedScript, onClearExternalScript }: Call
             setPendingFormData(null);
             setIsEditingDuration(false);
             setScriptData(null);
+            setOperatorNotes('');
             startTimeRef.current = null;
         },
         onError: (error) => {
@@ -565,15 +568,17 @@ export function CallForm({ externalSelectedScript, onClearExternalScript }: Call
                 />
 
                 <div className="space-y-2 mb-4">
-                    <FormLabel>Script / Knowledge Base</FormLabel>
+                    <FormLabel>Solution & Notes</FormLabel>
                     <ScriptSelector
                         selectedScript={scriptData}
+                        notes={operatorNotes}
                         onSelect={(s) => {
                             setScriptData(s);
                             if (s) {
                                 form.setValue('description', s.question);
                             }
                         }}
+                        onNotesChange={setOperatorNotes}
                     />
                 </div>
 

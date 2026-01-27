@@ -5,6 +5,9 @@ import LoginPage from '@/pages/LoginPage';
 import HomePage from '@/pages/HomePage';
 import AppLayout from '@/components/layout/AppLayout';
 
+import HistoryPage from '@/pages/HistoryPage';
+import DashboardPage from '@/pages/DashboardPage';
+
 function ProtectedRoute({ children }: { children: JSX.Element }) {
   const token = localStorage.getItem('token');
   if (!token) {
@@ -28,6 +31,8 @@ function App() {
             }
           >
             <Route index element={<HomePage />} />
+            <Route path="history" element={<HistoryPage />} />
+            <Route path="dashboard" element={<DashboardPage />} />
           </Route>
         </Routes>
       </BrowserRouter>

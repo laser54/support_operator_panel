@@ -15,7 +15,7 @@ class Script(Base):
     
     # Content
     question = Column(Text, nullable=False)
-    answer = Column(Text, nullable=False)
+    answer = Column(Text, nullable=True)  # Can be null for questions pending review
     
     # Custom / Review workflow
     is_custom = Column(Boolean, default=False, nullable=False)

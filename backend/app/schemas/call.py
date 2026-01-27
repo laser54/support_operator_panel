@@ -13,6 +13,7 @@ class CallBase(BaseModel):
     topic: str | None = None
     question: str
     solution: str | None = None
+    notes: str | None = None
     status: str = "closed"
     duration_seconds: int | None = None
 

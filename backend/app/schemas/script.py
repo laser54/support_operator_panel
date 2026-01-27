@@ -3,7 +3,7 @@ from datetime import datetime
 
 class ScriptBase(BaseModel):
     question: str
-    answer: str
+    answer: str | None = None  # Optional - can be filled by supervisor later
 
 class ScriptInput(ScriptBase):
     """Input for linking a script to a call."""
