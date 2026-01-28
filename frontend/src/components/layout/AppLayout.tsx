@@ -1,10 +1,14 @@
 import { Outlet, useNavigate, NavLink } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { LogOut, Phone, History, LayoutDashboard } from 'lucide-react';
+import { LogOut, Phone, History, LayoutDashboard, Users } from 'lucide-react';
 import { toast } from 'sonner';
+import { useCurrentUser } from '@/hooks/use-current-user';
 
 export default function AppLayout() {
     const navigate = useNavigate();
+    const { data: currentUser } = useCurrentUser();
+
+    const isAdmin = currentUser?.role === 'admin';
 
     const handleLogout = () => {
         localStorage.removeItem('token');
@@ -49,9 +53,25 @@ export default function AppLayout() {
                                 <LayoutDashboard className="h-4 w-4" />
                                 Dashboard
                             </NavLink>
+                            {isAdmin && (
+                                <NavLink
+                                    to="/users"
+                                    className={({ isActive }) =>
+                                        `flex items-center gap-2 transition-colors hover:text-foreground/80 ${isActive ? 'text-foreground' : 'text-foreground/60'}`
+                                    }
+                                >
+                                    <Users className="h-4 w-4" />
+                                    Users
+                                </NavLink>
+                            )}
                         </nav>
                     </div>
                     <div className="flex items-center justify-end space-x-2">
+                        {currentUser && (
+                            <span className="text-sm text-muted-foreground">
+                                {currentUser.username}
+                            </span>
+                        )}
                         <Button variant="ghost" size="icon" onClick={handleLogout} title="Logout">
                             <LogOut className="h-4 w-4" />
                         </Button>
