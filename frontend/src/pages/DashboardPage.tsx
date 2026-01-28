@@ -15,7 +15,7 @@ import {
 } from 'recharts';
 import { Loader2, Phone, Clock, Users } from 'lucide-react';
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
+const COLORS = ['#D4F62F', '#A3E635', '#FFFFFF', '#71717A', '#3F3F46'];
 
 export default function DashboardPage() {
     const { data: calls, isLoading } = useQuery({

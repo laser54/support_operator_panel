@@ -33,7 +33,7 @@ export default function HomePage() {
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                             Knowledge Base
-                            <span className="text-[10px] uppercase bg-green-100 text-green-700 px-1.5 py-0.5 rounded leading-none">AI Powered</span>
+                            <span className="text-[10px] uppercase bg-primary/20 text-foreground px-1.5 py-0.5 rounded leading-none font-bold">AI Powered</span>
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="flex-1 overflow-hidden">

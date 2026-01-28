@@ -56,13 +56,33 @@ export default function LoginPage() {
     }
 
     return (
-        <div className="flex h-screen items-center justify-center bg-slate-50">
-            <Card className="w-[350px]">
-                <CardHeader>
-                    <CardTitle className="text-2xl text-center">Support Panel</CardTitle>
-                    <CardDescription className="text-center">Enter your credentials to access</CardDescription>
-                </CardHeader>
-                <CardContent>
+        <div className="container relative h-screen flex-col items-center justify-center grid lg:max-w-none lg:grid-cols-2 lg:px-0">
+            <div className="relative hidden h-full flex-col bg-muted p-10 text-white dark:border-r lg:flex">
+                <div className="absolute inset-0 bg-zinc-900" />
+                <div className="relative z-20 flex items-center text-lg font-medium tracking-tight">
+                    <div className="mr-2 h-6 w-6 rounded-sm bg-primary" />
+                    PAYLINE
+                </div>
+                <div className="relative z-20 mt-auto">
+                    <blockquote className="space-y-2">
+                        <p className="text-lg text-zinc-300">
+                            &ldquo;Support operations optimized for speed and precision.
+                            The industrial standard for operator controls.&rdquo;
+                        </p>
+                    </blockquote>
+                </div>
+            </div>
+            <div className="lg:p-8">
+                <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
+                    <div className="flex flex-col space-y-2 text-center">
+                        <h1 className="text-2xl font-semibold tracking-tight">
+                            Access Control
+                        </h1>
+                        <p className="text-sm text-muted-foreground">
+                            Enter your credentials to access the operator panel
+                        </p>
+                    </div>
+
                     <Form {...form}>
                         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                             <FormField
@@ -72,7 +92,7 @@ export default function LoginPage() {
                                     <FormItem>
                                         <FormLabel>Username</FormLabel>
                                         <FormControl>
-                                            <Input placeholder="admin" {...field} />
+                                            <Input placeholder="operator_id" {...field} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -91,14 +111,14 @@ export default function LoginPage() {
                                     </FormItem>
                                 )}
                             />
-                            {error && <div className="text-sm text-red-500">{error}</div>}
-                            <Button type="submit" className="w-full" disabled={loginMutation.isPending}>
-                                {loginMutation.isPending ? 'Logging in...' : 'Login'}
+                            {error && <div className="text-sm font-medium text-destructive">{error}</div>}
+                            <Button type="submit" className="w-full font-bold" disabled={loginMutation.isPending}>
+                                {loginMutation.isPending ? 'Authenticating...' : 'Sign In'}
                             </Button>
                         </form>
                     </Form>
-                </CardContent>
-            </Card>
+                </div>
+            </div>
         </div>
     );
 }
