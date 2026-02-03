@@ -27,6 +27,7 @@ services:
     ports:
       - "8888:8000"
     environment:
+      - APP_ENV=development
       - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/support_panel
       - SECRET_KEY=dev-secret-key-change-in-production
       - FRONTEND_URL=http://localhost:3001

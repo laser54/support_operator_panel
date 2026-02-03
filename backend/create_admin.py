@@ -1,4 +1,8 @@
-"""Create initial admin user."""
+"""
+Create initial admin user.
+
+DEPRECATED: Используйте load_fixtures.py для загрузки тестовых данных.
+"""
 import asyncio
 from app.core.security import get_password_hash
 from app.db.session import AsyncSessionLocal
@@ -20,15 +24,18 @@ async def create_admin():
         # Create admin user
         admin = User(
             username="admin",
-            email="admin@example.com",
             hashed_password=get_password_hash("admin"),
-            role=UserRole.ADMIN
+            role=UserRole.ADMIN,
+            is_active=True,
         )
         session.add(admin)
         await session.commit()
         print("Admin user created successfully!")
         print("Username: admin")
         print("Password: admin")
+        print()
+        print("TIP: Для загрузки полного набора тестовых данных используйте:")
+        print("     uv run python load_fixtures.py")
 
 
 if __name__ == "__main__":

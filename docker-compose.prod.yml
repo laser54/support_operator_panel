@@ -5,6 +5,7 @@ services:
     ports:
       - "8000:8000"
     environment:
+      - APP_ENV=production
       - DATABASE_URL=postgresql://user:password@db:5432/support_panel
   frontend:
     build: ./frontend

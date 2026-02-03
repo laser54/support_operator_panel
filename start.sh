@@ -35,39 +35,30 @@ done
 echo "✅ Database is ready"
 echo ""
 
-# Run migrations
+# Run migrations inside Docker container
 echo "🔄 Running database migrations..."
-cd backend && uv run alembic upgrade head && cd ..
+docker-compose exec -T backend uv run alembic upgrade head
 
 echo ""
-echo "👤 Creating test user (admin/admin)..."
-
-# Create test user
-docker-compose exec -T db psql -U postgres -d support_panel << EOF
-INSERT INTO users (username, email, hashed_password, role) 
-VALUES (
-  'admin', 
-  'admin@example.com', 
-  '\$2b\$12\$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5GyYqVr/1jrYK',
-  'admin'
-) ON CONFLICT (username) DO NOTHING;
-EOF
+echo "📦 Loading test fixtures..."
+docker-compose exec -T backend uv run python load_fixtures.py
 
 echo ""
 echo "✅ Setup complete!"
 echo ""
 echo "🌐 Services are running:"
-echo "   - Backend API: http://localhost:8000"
-echo "   - API Docs:    http://localhost:8000/docs"
-echo "   - Frontend:    http://localhost:5173"
+echo "   - Backend API: http://localhost:8888"
+echo "   - API Docs:    http://localhost:8888/docs"
+echo "   - Frontend:    http://localhost:3001"
 echo ""
 echo "🔑 Test credentials:"
-echo "   Username: admin"
-echo "   Password: admin"
+echo "   admin / admin (администратор)"
+echo "   supervisor / supervisor123 (супервизор)"
+echo "   operator1 / operator123 (оператор)"
 echo ""
 echo "📝 Useful commands:"
-echo "   make down      - Stop all services"
-echo "   make db-shell  - Connect to database"
-echo "   make lint      - Check code quality"
+echo "   docker-compose down      - Stop all services"
+echo "   docker-compose logs -f   - View logs"
+echo "   docker-compose exec backend uv run python load_fixtures.py --force  - Reload fixtures"
 echo ""
 echo "Happy coding! 🎉"

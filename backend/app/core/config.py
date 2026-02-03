@@ -11,6 +11,19 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
+    # Environment: development, production
+    APP_ENV: str = "development"
+
+    @property
+    def is_development(self) -> bool:
+        """Check if running in development mode."""
+        return self.APP_ENV.lower() in ("development", "dev", "local")
+
+    @property
+    def is_production(self) -> bool:
+        """Check if running in production mode."""
+        return self.APP_ENV.lower() in ("production", "prod")
+
     # Database
     DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/support_panel"
 

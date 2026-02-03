@@ -4,25 +4,75 @@
 
 ## 🚀 Быстрый запуск
 
-### 1. Запустите все сервисы:
+### Вариант 1: Автоматический запуск (рекомендуется)
+```bash
+./start.sh
+```
+Или на Windows:
+```cmd
+start.bat
+```
+
+### Вариант 2: Ручной запуск
+
+#### 1. Запустите все сервисы:
 ```bash
 docker-compose up --build
 ```
 
-### 2. В новом терминале Git Bash примените миграции:
+#### 2. В новом терминале примените миграции:
 ```bash
 docker-compose exec backend uv run alembic upgrade head
 ```
 
-### 3. Создайте тестового пользователя:
+#### 3. Загрузите тестовые данные (фикстуры):
 ```bash
-docker-compose exec db psql -U postgres -d support_panel -c "INSERT INTO users (username, email, hashed_password, role) VALUES ('admin', 'admin@example.com', '\$2b\$12\$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5GyYqVr/1jrYK', 'admin') ON CONFLICT (username) DO NOTHING;"
+docker-compose exec backend uv run python load_fixtures.py
 ```
 
-### 4. Проверьте работу:
-- API Docs: http://localhost:8000/docs
+#### 4. Проверьте работу:
+- API Docs: http://localhost:8888/docs
 - Frontend: http://localhost:3001
-- Логин: `admin` / `admin`
+
+## 🔑 Тестовые учётные записи
+
+| Логин | Пароль | Роль |
+|-------|--------|------|
+| `admin` | `admin` | Администратор |
+| `supervisor` | `supervisor123` | Супервизор (админ) |
+| `operator1` | `operator123` | Оператор |
+| `operator2` | `operator123` | Оператор |
+| `operator3` | `operator123` | Оператор |
+
+## 📦 Тестовые данные (фикстуры)
+
+При запуске `load_fixtures.py` загружаются:
+- **Пользователи**: админ, супервизор, 3 оператора
+- **Регионы**: 15 городов Казахстана (Алматы, Астана, Шымкент и др.)
+- **Департаменты**: отделы по регионам (Контакт-центр, Отдел продаж и т.д.)
+- **Скрипты**: примеры вопросов и ответов для базы знаний
+
+### Поведение в зависимости от окружения
+
+| APP_ENV | Поведение |
+|---------|-----------|
+| `development` (по умолчанию) | **Автоматическая очистка БД** + загрузка фикстур |
+| `production` | ❌ **Заблокировано** - фикстуры нельзя запустить |
+
+В development режиме при каждом запуске `load_fixtures.py`:
+1. ✅ Удаляются все существующие данные (users, regions, departments, scripts)
+2. ✅ Загружаются свежие тестовые данные
+
+Это гарантирует чистую БД при каждом локальном запуске!
+
+### Опции запуска фикстур
+```bash
+# По умолчанию в dev: очистка + загрузка
+docker-compose exec backend uv run python load_fixtures.py
+
+# Добавить только недостающие данные (без очистки)
+docker-compose exec backend uv run python load_fixtures.py --no-force
+```
 
 ## 📋 Полезные команды
 
@@ -44,7 +94,10 @@ docker-compose logs -f frontend
 docker-compose exec db psql -U postgres -d support_panel
 
 # Применить миграции
-cd backend && uv run alembic upgrade head && cd ..
+docker-compose exec backend uv run alembic upgrade head
+
+# Загрузить фикстуры
+docker-compose exec backend uv run python load_fixtures.py
 
 # Создать новую миграцию
 cd backend && uv run alembic revision --autogenerate -m "description" && cd ..
@@ -60,4 +113,12 @@ cd backend && uv run ruff check . && cd ..
 2. Или используйте Chocolatey: `choco install make`
 3. Или используйте WSL вместо Git Bash
 
-Тогда сможете использовать команды `make dev`, `make down` и т.д.
+Тогда сможете использовать команды:
+```bash
+make dev           # Запуск с пересборкой
+make up            # Запуск в фоне
+make down          # Остановка
+make fixtures      # Загрузка фикстур
+make fixtures-force # Перезагрузка фикстур (с удалением)
+make setup         # Миграции + фикстуры
+```
