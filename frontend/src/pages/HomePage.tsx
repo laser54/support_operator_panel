@@ -1,45 +1,31 @@
 import { useState } from 'react';
-import { CallForm } from '@/components/CallForm';
-import { RecentCalls } from '@/components/RecentCalls';
-import { SearchPanel } from '@/components/SearchPanel';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { OperatorForm } from '@/components/OperatorForm';
+import { KnowledgePanel } from '@/components/KnowledgePanel';
 import type { ScriptSelection } from '@/components/ScriptSelector';
 
+/**
+ * HomePage - Рабочее место оператора
+ * 
+ * Дизайн: Split-screen layout
+ * - Левая половина: Форма ввода данных (компактная, без скролла)
+ * - Правая половина: База знаний / AI-поиск
+ */
 export default function HomePage() {
     const [selectedScript, setSelectedScript] = useState<ScriptSelection | null>(null);
 
     return (
-        <div className="grid h-full grid-cols-1 md:grid-cols-12 gap-6">
-            <div className="md:col-span-4 lg:col-span-3 h-full flex flex-col gap-6">
-                <Card className="flex-1 flex flex-col min-h-0">
-                    <CardHeader>
-                        <CardTitle>New Call</CardTitle>
-                    </CardHeader>
-                    <CardContent className="flex-1 overflow-y-auto">
-                        <CallForm
-                            externalSelectedScript={selectedScript}
-                            onClearExternalScript={() => setSelectedScript(null)}
-                        />
-                    </CardContent>
-                </Card>
-
-                <div className="h-1/3 min-h-[200px]">
-                    <RecentCalls />
-                </div>
+        <div className="h-[calc(100vh-4rem)] flex gap-0">
+            {/* LEFT PANEL: Operator Form - Fixed, No Scroll */}
+            <div className="w-1/2 min-w-[480px] max-w-[640px] border-r border-border/50 bg-background">
+                <OperatorForm
+                    externalSelectedScript={selectedScript}
+                    onClearExternalScript={() => setSelectedScript(null)}
+                />
             </div>
 
-            <div className="md:col-span-8 lg:col-span-9 h-full flex flex-col">
-                <Card className="flex-1 flex flex-col min-h-0">
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            Knowledge Base
-                            <span className="text-[10px] uppercase bg-primary/20 text-foreground px-1.5 py-0.5 rounded leading-none font-bold">AI Powered</span>
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="flex-1 overflow-hidden">
-                        <SearchPanel onSelectScript={setSelectedScript} />
-                    </CardContent>
-                </Card>
+            {/* RIGHT PANEL: Knowledge Base */}
+            <div className="flex-1 bg-muted/30">
+                <KnowledgePanel onSelectScript={setSelectedScript} />
             </div>
         </div>
     );
