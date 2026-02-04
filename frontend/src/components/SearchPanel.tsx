@@ -100,9 +100,9 @@ export function SearchPanel({ onSelectScript }: SearchPanelProps) {
                 )}
 
                 {!isLoading && data && data.matches?.map((match: any) => (
-                    <div key={match.id} className="mb-4 bg-white rounded-lg border p-4 shadow-sm hover:border-primary/50 transition-colors group">
+                    <div key={match.id} className="mb-4 bg-white rounded-lg border p-4 shadow-sm hover:border-violet-300 transition-colors group">
                         <div className="flex justify-between items-start mb-2">
-                            <h4 className="font-semibold text-sm text-primary">Q: {match.question}</h4>
+                            <h4 className="font-semibold text-sm text-zinc-800">Q: {match.question}</h4>
                             <div className="flex gap-1">
                                 {onSelectScript && (
                                     <Button
@@ -124,7 +124,7 @@ export function SearchPanel({ onSelectScript }: SearchPanelProps) {
                                 </Button>
                             </div>
                         </div>
-                        <div className="text-sm text-slate-700 whitespace-pre-wrap bg-slate-50 p-3 rounded border-l-4 border-l-primary/30">
+                        <div className="text-sm text-slate-700 whitespace-pre-wrap bg-slate-50 p-3 rounded border-l-4 border-l-violet-400">
                             {match.answer}
                         </div>
                         {match.score && (

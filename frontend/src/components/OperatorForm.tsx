@@ -25,6 +25,7 @@ import { api } from '@/api/client';
 import { toast } from 'sonner';
 import { Play, Square, RotateCcw, Save, User, Phone, MapPin, Building2, MessageSquare, Clock, StickyNote } from 'lucide-react';
 import type { ScriptSelection } from '@/components/ScriptSelector';
+import { SaveCallConfirmDialog, type CallPreviewData } from '@/components/SaveCallConfirmDialog';
 
 const callSchema = z.object({
     region_id: z.string().min(1, 'Выберите регион'),
@@ -61,6 +62,8 @@ export function OperatorForm({ externalSelectedScript, onClearExternalScript }: 
     const startTimeRef = useRef<number | null>(null);
     const [scriptData, setScriptData] = useState<ScriptSelection | null>(null);
     const [operatorNotes, setOperatorNotes] = useState('');
+    const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+    const [previewData, setPreviewData] = useState<CallPreviewData | null>(null);
 
     const form = useForm<CallFormValues>({
         resolver: zodResolver(callSchema),
@@ -176,20 +179,20 @@ export function OperatorForm({ externalSelectedScript, onClearExternalScript }: 
     const queryClient = useQueryClient();
 
     const submitMutation = useMutation({
-        mutationFn: async (data: CallFormValues) => {
+        mutationFn: async (confirmedData: CallPreviewData) => {
             const payload = {
-                caller_name: data.applicant_name,
-                caller_phone: data.phone_number,
-                caller_gender: data.caller_gender || null,
-                caller_region_id: data.region_id ? parseInt(data.region_id) : null,
-                caller_department_id: data.department_id ? parseInt(data.department_id) : null,
+                caller_name: confirmedData.applicant_name,
+                caller_phone: confirmedData.phone_number,
+                caller_gender: confirmedData.caller_gender || null,
+                caller_region_id: confirmedData.region_id ? parseInt(confirmedData.region_id) : null,
+                caller_department_id: confirmedData.department_id ? parseInt(confirmedData.department_id) : null,
                 topic: 'General',
-                question: data.description,
-                solution: scriptData?.answer || null,
-                notes: operatorNotes || null,
-                script: scriptData,
+                question: confirmedData.description,
+                solution: confirmedData.scriptData?.answer || null,
+                notes: confirmedData.operatorNotes || null,
+                script: confirmedData.scriptData,
                 status: 'closed',
-                duration_seconds: data.duration_seconds ?? elapsedSeconds,
+                duration_seconds: confirmedData.duration_seconds,
             };
             const response = await api.post('/calls/', payload);
             return response.data;
@@ -203,6 +206,8 @@ export function OperatorForm({ externalSelectedScript, onClearExternalScript }: 
             setElapsedSeconds(0);
             setScriptData(null);
             setOperatorNotes('');
+            setShowConfirmDialog(false);
+            setPreviewData(null);
             startTimeRef.current = null;
             if (onClearExternalScript) onClearExternalScript();
         },
@@ -211,8 +216,47 @@ export function OperatorForm({ externalSelectedScript, onClearExternalScript }: 
         }
     });
 
+    // Get region and department names for display
+    const getRegionName = (regionId: string) => {
+        if (!regions || !regionId) return undefined;
+        const region = regions.find((r: any) => String(r.id) === regionId);
+        return region?.name;
+    };
+
+    const getDepartmentName = (departmentId: string) => {
+        if (!departments || !departmentId) return undefined;
+        const dept = departments.find((d: any) => String(d.id) === departmentId);
+        return dept?.name;
+    };
+
     const onSubmit = (data: CallFormValues) => {
-        submitMutation.mutate(data);
+        // Stop timer if still running
+        if (isTimerRunning) {
+            setIsTimerRunning(false);
+            setIsTimerStopped(true);
+        }
+
+        // Prepare preview data for confirmation dialog
+        const preview: CallPreviewData = {
+            applicant_name: data.applicant_name,
+            phone_number: data.phone_number,
+            caller_gender: data.caller_gender,
+            region_id: data.region_id,
+            department_id: data.department_id,
+            description: data.description,
+            duration_seconds: data.duration_seconds ?? elapsedSeconds,
+            region_name: getRegionName(data.region_id),
+            department_name: getDepartmentName(data.department_id),
+            scriptData: scriptData,
+            operatorNotes: operatorNotes,
+        };
+
+        setPreviewData(preview);
+        setShowConfirmDialog(true);
+    };
+
+    const handleConfirmSave = (confirmedData: CallPreviewData) => {
+        submitMutation.mutate(confirmedData);
     };
 
     return (
@@ -436,10 +480,10 @@ export function OperatorForm({ externalSelectedScript, onClearExternalScript }: 
 
                         {/* Selected Script Preview */}
                         {scriptData && (
-                            <div className="p-2.5 rounded-lg bg-primary/10 border border-primary/20">
+                            <div className="p-2.5 rounded-lg bg-emerald-50 border border-emerald-200">
                                 <div className="flex items-start justify-between gap-2">
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-[10px] font-medium text-primary mb-0.5 uppercase tracking-wide">Решение</p>
+                                        <p className="text-[10px] font-medium text-emerald-700 mb-0.5 uppercase tracking-wide">Решение</p>
                                         <p className="text-xs text-foreground line-clamp-2">{scriptData.answer}</p>
                                     </div>
                                     <Button
@@ -491,6 +535,15 @@ export function OperatorForm({ externalSelectedScript, onClearExternalScript }: 
                     </div>
                 </form>
             </Form>
+
+            {/* Confirmation Dialog */}
+            <SaveCallConfirmDialog
+                open={showConfirmDialog}
+                onOpenChange={setShowConfirmDialog}
+                data={previewData}
+                onConfirm={handleConfirmSave}
+                isLoading={submitMutation.isPending}
+            />
         </div>
     );
 }

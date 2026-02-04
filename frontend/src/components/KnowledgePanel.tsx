@@ -79,7 +79,7 @@ export function KnowledgePanel({ onSelectScript }: KnowledgePanelProps) {
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input
                             placeholder="Введите вопрос клиента..."
-                            className="pl-10 h-11 bg-muted/50 border-0 focus-visible:ring-2 focus-visible:ring-primary/50"
+                            className="pl-10 h-11 bg-muted/50 border-0 focus-visible:ring-2 focus-visible:ring-zinc-400"
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}
                         />
@@ -149,22 +149,22 @@ export function KnowledgePanel({ onSelectScript }: KnowledgePanelProps) {
                 {!isLoading && data && data.matches?.map((match: any, index: number) => (
                     <div
                         key={match.id}
-                        className="mb-4 bg-white dark:bg-zinc-900 rounded-2xl border border-border/50 p-5 shadow-sm hover:shadow-md hover:border-primary/30 transition-all duration-200 group"
+                        className="mb-4 bg-white dark:bg-zinc-900 rounded-2xl border border-border/50 p-5 shadow-sm hover:shadow-md hover:border-violet-300 transition-all duration-200 group"
                         style={{ animationDelay: `${index * 50}ms` }}
                     >
                         {/* Question */}
                         <div className="flex items-start justify-between gap-3 mb-3">
                             <div className="flex-1">
                                 <div className="flex items-center gap-2 mb-1">
-                                    <span className="text-[10px] uppercase font-bold text-primary bg-primary/10 px-2 py-0.5 rounded">
+                                    <span className="text-[10px] uppercase font-bold text-zinc-700 bg-zinc-100 px-2 py-0.5 rounded">
                                         Вопрос
                                     </span>
                                     {match.score && (
                                         <span className={`text-[10px] px-2 py-0.5 rounded flex items-center gap-1 ${match.score > 0.7
-                                                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400'
-                                                : match.score > 0.4
-                                                    ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400'
-                                                    : 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400'
+                                            ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400'
+                                            : match.score > 0.4
+                                                ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400'
+                                                : 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400'
                                             }`}>
                                             <span className={`w-1.5 h-1.5 rounded-full ${match.score > 0.7 ? 'bg-emerald-500' : match.score > 0.4 ? 'bg-amber-500' : 'bg-red-500'
                                                 }`} />
@@ -177,7 +177,7 @@ export function KnowledgePanel({ onSelectScript }: KnowledgePanelProps) {
                         </div>
 
                         {/* Answer */}
-                        <div className="bg-muted/50 rounded-xl p-4 mb-3 border-l-4 border-l-primary/50">
+                        <div className="bg-muted/50 rounded-xl p-4 mb-3 border-l-4 border-l-violet-400">
                             <div className="text-[10px] uppercase font-bold text-muted-foreground mb-2">Ответ</div>
                             <div className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
                                 {match.answer}
