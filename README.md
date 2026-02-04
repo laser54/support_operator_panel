@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![PAYLINE](https://img.shields.io/badge/PAYLINE-Contact_Center-D4F62F?style=for-the-badge&logoColor=black)
+![Support operator](https://img.shields.io/badge/Support operator-Contact_Center-D4F62F?style=for-the-badge&logoColor=black)
 
 **Современная веб-панель для операторов контакт-центра с AI-поиском по базе знаний и аналитикой в реальном времени**
 
@@ -107,7 +107,7 @@
 
 ```bash
 # 1. Клонировать репозиторий
-git clone https://github.com/your-org/support_operator_panel.git
+git clone https://github.com/laser54/support_operator_panel.git
 cd support_operator_panel
 
 # 2. Запустить все сервисы
@@ -367,8 +367,10 @@ docker-compose exec backend uv run alembic current
 
 <div align="center">
 
-**Made with ❤️ for PAYLINE Contact Center**
+**Made with ❤️ for Support operator Contact Center**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE)
 
 </div>
+
+

@@ -4,7 +4,7 @@
 
 @layer base {
     :root {
-        /* PAYLINE Brand Tokens */
+        /* Support operator Brand Tokens */
 
         /* Background & Foreground (Zinc 950/White) */
         --background: 0 0% 100%;
@@ -54,7 +54,7 @@
     }
 
     .dark {
-        /* PAYLINE Dark Mode (Zinc 950 Base) */
+        /* Support operator Dark Mode (Zinc 950 Base) */
 
         --background: 240 10% 3.9%;
         /* #09090B */
@@ -100,3 +100,4 @@
         @apply bg-background text-foreground;
     }
 }
+

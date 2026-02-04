@@ -129,66 +129,65 @@ export const KnowledgePanel = forwardRef<KnowledgePanelRef, KnowledgePanelProps>
     return (
         <div className="h-full flex flex-col">
             {/* Header */}
-            <div className="shrink-0 px-5 h-16 border-b border-white/10 bg-zinc-950 text-white flex items-center">
-                <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
-                        <BookOpen className="w-5 h-5 text-primary" />
+            <div className="shrink-0 px-5 py-3 border-b border-white/10 bg-zinc-950 text-white">
+                <div className="flex items-center gap-4">
+                    {/* Title */}
+                    <div className="flex items-center gap-3 shrink-0">
+                        <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
+                            <BookOpen className="w-5 h-5 text-primary" />
+                        </div>
+                        <div>
+                            <h2 className="text-base font-semibold tracking-tight flex items-center gap-2">
+                                База знаний
+                                <span className="text-[10px] uppercase bg-gradient-to-r from-violet-500 to-purple-500 text-white px-2 py-0.5 rounded-full font-bold flex items-center gap-1">
+                                    <Sparkles className="w-3 h-3" />
+                                    AI
+                                </span>
+                            </h2>
+                        </div>
                     </div>
-                    <div>
-                        <h2 className="text-lg font-semibold tracking-tight flex items-center gap-2">
-                            База знаний
-                            <span className="text-[10px] uppercase bg-gradient-to-r from-violet-500 to-purple-500 text-white px-2 py-0.5 rounded-full font-bold flex items-center gap-1">
-                                <Sparkles className="w-3 h-3" />
-                                AI
-                            </span>
-                        </h2>
-                        <p className="text-xs text-zinc-400">Найдите ответ на вопрос клиента</p>
-                    </div>
-                </div>
 
-                {/* Search Form */}
-                <form onSubmit={handleSearch} className="ml-auto flex gap-2">
-                    <div className="relative flex-1">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
-                        <Input
-                            ref={searchInputRef}
-                            placeholder="Введите вопрос клиента... (Ctrl+S)"
-                            className="pl-10 pr-10 h-11 bg-white border border-zinc-300 text-zinc-900 placeholder:text-zinc-400 focus-visible:ring-2 focus-visible:ring-zinc-400"
-                            value={query}
-                            onChange={(e) => setQuery(e.target.value)}
-                        />
-                        {query.trim().length > 0 && (
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    setQuery('');
-                                    setSearchQuery('');
-                                }}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-700"
-                                aria-label="Очистить поиск"
-                            >
-                                ×
-                            </button>
-                        )}
-                    </div>
-                    <Button
-                        type="submit"
-                        disabled={isLoading || !query.trim()}
-                        className="h-11 px-6 bg-primary hover:bg-primary/90 text-primary-foreground"
-                    >
-                        {isLoading ? (
-                            <span className="flex items-center gap-2">
+                    {/* Search Form */}
+                    <form onSubmit={handleSearch} className="flex-1 flex gap-2 min-w-0">
+                        <div className="relative flex-1 min-w-0">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
+                            <Input
+                                ref={searchInputRef}
+                                placeholder="Введите во"
+                                className="pl-10 pr-10 h-10 w-full bg-white border border-zinc-300 text-zinc-900 placeholder:text-zinc-400 focus-visible:ring-2 focus-visible:ring-zinc-400"
+                                value={query}
+                                onChange={(e) => setQuery(e.target.value)}
+                            />
+                            {query.trim().length > 0 && (
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setQuery('');
+                                        setSearchQuery('');
+                                    }}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-700"
+                                    aria-label="Очистить поиск"
+                                >
+                                    ×
+                                </button>
+                            )}
+                        </div>
+                        <Button
+                            type="submit"
+                            disabled={isLoading || !query.trim()}
+                            className="h-10 px-5 shrink-0 bg-primary hover:bg-primary/90 text-primary-foreground"
+                        >
+                            {isLoading ? (
                                 <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                Поиск...
-                            </span>
-                        ) : (
-                            <span className="flex items-center gap-2">
-                                Найти
-                                <ArrowRight className="w-4 h-4" />
-                            </span>
-                        )}
-                    </Button>
-                </form>
+                            ) : (
+                                <span className="flex items-center gap-2">
+                                    Найти
+                                    <ArrowRight className="w-4 h-4" />
+                                </span>
+                            )}
+                        </Button>
+                    </form>
+                </div>
             </div>
 
             {/* Results */}

@@ -44,10 +44,9 @@ export default function AppLayout() {
             <header className="shrink-0 h-16 w-full border-b border-white/10 bg-zinc-950 text-white">
                 <div className="h-full px-4 flex items-center justify-between">
                     {/* Left: Logo & Navigation */}
-                    <div className="flex items-center gap-6">
-                        <a className="flex items-center gap-2 font-bold tracking-tight" href="/">
-                            <Logo className="h-8 w-8 text-primary" />
-                            <span className="text-xl">PAYLINE</span>
+                    <div className="flex items-center gap-4">
+                        <a className="flex items-center gap-2.5 font-bold tracking-tight shrink-0" href="/">
+                            <Logo className="h-8 w-8" />
                         </a>
 
                         <nav className="flex items-center gap-1 ml-4">
@@ -171,3 +170,5 @@ export default function AppLayout() {
         </div>
     );
 }
+
+

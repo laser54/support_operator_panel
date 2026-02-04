@@ -61,7 +61,7 @@ export default function LoginPage() {
                 <div className="absolute inset-0 bg-zinc-900" />
                 <div className="relative z-20 flex items-center text-lg font-medium tracking-tight">
                     <div className="mr-2 h-6 w-6 rounded-sm bg-primary" />
-                    PAYLINE
+                    Support operator
                 </div>
                 <div className="relative z-20 mt-auto">
                     <blockquote className="space-y-2">
@@ -122,3 +122,5 @@ export default function LoginPage() {
         </div>
     );
 }
+
+
