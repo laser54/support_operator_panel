@@ -44,6 +44,7 @@ export interface CallPreviewData {
     resolution_name?: string;
     scriptData?: ScriptSelection | null;
     operatorNotes?: string;
+    operatorAnswer?: string;
 }
 
 interface SaveCallConfirmDialogProps {
@@ -197,7 +198,7 @@ export function SaveCallConfirmDialog({
                             />
                             <InfoRow
                                 icon={CheckCircle2}
-                                label="Решение"
+                                label="Исход/результат"
                                 value={data.resolution_name || `ID: ${data.resolution_id}`}
                             />
                         </div>
@@ -283,18 +284,35 @@ export function SaveCallConfirmDialog({
                         </div>
                     </div>
 
-                    {/* Script/Solution if present */}
-                    {data.scriptData && (
+                    {/* Answer from registry if present */}
+                    {data.scriptData?.answer && (
                         <div className="pt-3">
                             <div className="flex items-center gap-1.5 mb-2">
                                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
                                 <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">
-                                    Решение из справочника
+                                    Ответ из реестра
                                 </span>
                             </div>
                             <div className="rounded-xl border border-emerald-200 bg-emerald-50/50 p-3">
                                 <p className="text-sm text-emerald-800 leading-relaxed">
                                     {data.scriptData.answer}
+                                </p>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Operator answer */}
+                    {data.operatorAnswer && data.operatorAnswer.trim().length > 0 && (
+                        <div className="pt-3">
+                            <div className="flex items-center gap-1.5 mb-2">
+                                <MessageSquare className="w-3.5 h-3.5 text-zinc-700" />
+                                <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+                                    Ответ клиенту
+                                </span>
+                            </div>
+                            <div className="rounded-xl border border-zinc-200 bg-white p-3">
+                                <p className="text-sm text-foreground leading-relaxed">
+                                    {data.operatorAnswer}
                                 </p>
                             </div>
                         </div>

@@ -206,10 +206,10 @@ export default function HistoryPage() {
             }),
             columnHelper.display({
                 id: 'solution',
-                header: 'Решение',
+                header: 'Ответ',
                 cell: (info) => {
                     const script = info.row.original.script;
-                    const notes = info.row.original.notes;
+                    const answer = info.row.original.solution;
                     if (script?.answer) {
                         return (
                             <div className="max-w-[200px] truncate text-green-700" title={script.answer}>
@@ -217,10 +217,10 @@ export default function HistoryPage() {
                             </div>
                         );
                     }
-                    if (notes) {
+                    if (answer) {
                         return (
-                            <div className="max-w-[200px] truncate text-blue-600" title={notes}>
-                                📝 {notes}
+                            <div className="max-w-[200px] truncate text-blue-600" title={answer}>
+                                {answer}
                             </div>
                         );
                     }

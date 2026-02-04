@@ -24,7 +24,7 @@ import {
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/api/client';
 import { toast } from 'sonner';
-import { Play, Square, RotateCcw, Save, User, Phone, MapPin, Building2, MessageSquare, Clock, StickyNote, Tag, CheckCircle2, FileQuestion } from 'lucide-react';
+import { Play, Square, RotateCcw, Save, User, Phone, MapPin, Building2, MessageSquare, Clock, StickyNote, Tag, CheckCircle2, FileQuestion, Link2Off } from 'lucide-react';
 import type { ScriptSelection } from '@/components/ScriptSelector';
 import { SaveCallConfirmDialog, type CallPreviewData } from '@/components/SaveCallConfirmDialog';
 
@@ -65,8 +65,8 @@ export function OperatorForm({ externalSelectedScript, onClearExternalScript }: 
     const startTimeRef = useRef<number | null>(null);
     const [scriptData, setScriptData] = useState<ScriptSelection | null>(null);
     const [operatorNotes, setOperatorNotes] = useState('');
+    const [operatorAnswer, setOperatorAnswer] = useState('');
     const [reviewEnabled, setReviewEnabled] = useState(false);
-    const [reviewAnswer, setReviewAnswer] = useState('');
     const [showConfirmDialog, setShowConfirmDialog] = useState(false);
     const [previewData, setPreviewData] = useState<CallPreviewData | null>(null);
     const [regionSearch, setRegionSearch] = useState('');
@@ -125,39 +125,15 @@ export function OperatorForm({ externalSelectedScript, onClearExternalScript }: 
     const description = form.watch('description');
 
     useEffect(() => {
-        if (reviewEnabled && externalSelectedScript && onClearExternalScript) {
-            onClearExternalScript();
+        if (reviewEnabled) {
+            if (externalSelectedScript && onClearExternalScript) {
+                onClearExternalScript();
+            }
+            if (scriptData) {
+                setScriptData(null);
+            }
         }
-
-        setScriptData((prev) => {
-            if (reviewEnabled) {
-                if (description.trim().length === 0) {
-                    return null;
-                }
-                const next = {
-                    question: description,
-                    answer: reviewAnswer.length > 0 ? reviewAnswer : null,
-                    is_custom: true,
-                    needs_review: true,
-                };
-                if (
-                    prev &&
-                    prev.is_custom &&
-                    prev.needs_review &&
-                    prev.question === next.question &&
-                    prev.answer === next.answer
-                ) {
-                    return prev;
-                }
-                return next;
-            }
-
-            if (prev?.is_custom && prev.needs_review) {
-                return null;
-            }
-            return prev;
-        });
-    }, [reviewEnabled, reviewAnswer, description, externalSelectedScript, onClearExternalScript]);
+    }, [reviewEnabled, externalSelectedScript, onClearExternalScript, scriptData]);
 
     const filteredDepartments = useMemo(() => {
         if (!departments) return [];
@@ -197,12 +173,20 @@ export function OperatorForm({ externalSelectedScript, onClearExternalScript }: 
     }, [departments, form, selectedRegionId]);
 
     useEffect(() => {
-        if (reviewEnabled) return;
         if (externalSelectedScript) {
+            if (reviewEnabled) {
+                setReviewEnabled(false);
+            }
             setScriptData(externalSelectedScript);
-            form.setValue('description', externalSelectedScript.question || '');
+            const currentDescription = form.getValues('description');
+            if (!currentDescription.trim()) {
+                form.setValue('description', externalSelectedScript.question || '');
+            }
+            if (!operatorAnswer.trim() && externalSelectedScript.answer) {
+                setOperatorAnswer(externalSelectedScript.answer);
+            }
         }
-    }, [externalSelectedScript, form, reviewEnabled]);
+    }, [externalSelectedScript, form, reviewEnabled, operatorAnswer]);
 
     useEffect(() => {
         if (isTimerRunning || isTimerStopped) return;
@@ -258,6 +242,18 @@ export function OperatorForm({ externalSelectedScript, onClearExternalScript }: 
 
     const submitMutation = useMutation({
         mutationFn: async (confirmedData: CallPreviewData) => {
+            const reviewScript =
+                reviewEnabled && confirmedData.description.trim().length > 0
+                    ? {
+                        external_id: null,
+                        question: confirmedData.description,
+                        answer: confirmedData.operatorAnswer?.trim() || null,
+                        is_custom: true,
+                        needs_review: true,
+                        in_registry_queue: false,
+                    }
+                    : null;
+
             const payload = {
                 caller_name: confirmedData.applicant_name,
                 caller_phone: confirmedData.phone_number,
@@ -268,9 +264,9 @@ export function OperatorForm({ externalSelectedScript, onClearExternalScript }: 
                 resolution_id: confirmedData.resolution_id ? parseInt(confirmedData.resolution_id) : null,
                 topic: confirmedData.call_type_name || 'General',
                 question: confirmedData.description,
-                solution: confirmedData.scriptData?.answer || null,
+                solution: confirmedData.operatorAnswer?.trim() || null,
                 notes: confirmedData.operatorNotes || null,
-                script: confirmedData.scriptData,
+                script: confirmedData.scriptData || reviewScript,
                 duration_seconds: confirmedData.duration_seconds,
             };
             const response = await api.post('/calls/', payload);
@@ -284,7 +280,9 @@ export function OperatorForm({ externalSelectedScript, onClearExternalScript }: 
             setIsTimerStopped(false);
             setElapsedSeconds(0);
             setScriptData(null);
+            setOperatorAnswer('');
             setOperatorNotes('');
+            setReviewEnabled(false);
             setShowConfirmDialog(false);
             setPreviewData(null);
             startTimeRef.current = null;
@@ -343,6 +341,7 @@ export function OperatorForm({ externalSelectedScript, onClearExternalScript }: 
             call_type_name: getCallTypeName(data.call_type_id),
             resolution_name: getResolutionName(data.resolution_id),
             scriptData: scriptData,
+            operatorAnswer: operatorAnswer,
             operatorNotes: operatorNotes,
         };
 
@@ -412,8 +411,8 @@ export function OperatorForm({ externalSelectedScript, onClearExternalScript }: 
 
             {/* Form Content - SCROLLABLE */}
             <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="flex-1 flex flex-col overflow-hidden">
-                    <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                <form onSubmit={form.handleSubmit(onSubmit)} className="flex-1 flex flex-col">
+                    <div className="flex-1 p-3 space-y-2">
                         {/* Row 1: Region & Department */}
                         <div className="grid grid-cols-2 gap-3">
                             <FormField
@@ -421,7 +420,7 @@ export function OperatorForm({ externalSelectedScript, onClearExternalScript }: 
                                 name="region_id"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+                                        <FormLabel className="text-[11px] font-medium text-muted-foreground flex items-center gap-1">
                                             <MapPin className="w-3 h-3" /> Регион
                                         </FormLabel>
                                         <Select
@@ -432,7 +431,7 @@ export function OperatorForm({ externalSelectedScript, onClearExternalScript }: 
                                             }}
                                         >
                                             <FormControl>
-                                                <SelectTrigger className="h-9">
+                                                <SelectTrigger className="h-8">
                                                     <SelectValue placeholder="Выберите..." />
                                                 </SelectTrigger>
                                             </FormControl>
@@ -471,7 +470,7 @@ export function OperatorForm({ externalSelectedScript, onClearExternalScript }: 
                                 name="department_id"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+                                        <FormLabel className="text-[11px] font-medium text-muted-foreground flex items-center gap-1">
                                             <Building2 className="w-3 h-3" /> Отдел
                                         </FormLabel>
                                         <Select
@@ -483,7 +482,7 @@ export function OperatorForm({ externalSelectedScript, onClearExternalScript }: 
                                             }}
                                         >
                                             <FormControl>
-                                                <SelectTrigger className="h-9">
+                                                <SelectTrigger className="h-8">
                                                     <SelectValue placeholder={!selectedRegionId ? '← Регион' : 'Выберите...'} />
                                                 </SelectTrigger>
                                             </FormControl>
@@ -519,18 +518,18 @@ export function OperatorForm({ externalSelectedScript, onClearExternalScript }: 
                             />
                         </div>
 
-                        {/* Row 2: Name & Phone */}
-                        <div className="grid grid-cols-2 gap-3">
+                        {/* Row 2: Name / Phone / Gender */}
+                        <div className="grid grid-cols-3 gap-3">
                             <FormField
                                 control={form.control}
                                 name="applicant_name"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+                                        <FormLabel className="text-[11px] font-medium text-muted-foreground flex items-center gap-1">
                                             <User className="w-3 h-3" /> Имя
                                         </FormLabel>
                                         <FormControl>
-                                            <Input placeholder="Иван Иванов" className="h-9" {...field} />
+                                            <Input placeholder="Иван Иванов" className="h-8" {...field} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -542,31 +541,74 @@ export function OperatorForm({ externalSelectedScript, onClearExternalScript }: 
                                 name="phone_number"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+                                        <FormLabel className="text-[11px] font-medium text-muted-foreground flex items-center gap-1">
                                             <Phone className="w-3 h-3" /> Телефон
                                         </FormLabel>
                                         <FormControl>
-                                            <Input placeholder="+7 ..." className="h-9" {...field} />
+                                            <Input placeholder="+7 ..." className="h-8" {...field} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
                                 )}
                             />
+
+                            <FormField
+                                control={form.control}
+                                name="caller_gender"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className="text-[11px] font-medium text-muted-foreground">Пол</FormLabel>
+                                        <FormControl>
+                                            <div className="flex gap-2">
+                                                <Button
+                                                    type="button"
+                                                    size="sm"
+                                                    variant={field.value === 'М' ? 'default' : 'outline'}
+                                                    className={`flex-1 h-8 text-xs ${field.value === 'М' ? 'bg-blue-600 hover:bg-blue-700' : ''}`}
+                                                    onClick={() => field.onChange('М')}
+                                                >
+                                                    М
+                                                </Button>
+                                                <Button
+                                                    type="button"
+                                                    size="sm"
+                                                    variant={field.value === 'Ж' ? 'default' : 'outline'}
+                                                    className={`flex-1 h-8 text-xs ${field.value === 'Ж' ? 'bg-pink-600 hover:bg-pink-700' : ''}`}
+                                                    onClick={() => field.onChange('Ж')}
+                                                >
+                                                    Ж
+                                                </Button>
+                                                {field.value && (
+                                                    <Button
+                                                        type="button"
+                                                        size="sm"
+                                                        variant="ghost"
+                                                        onClick={() => field.onChange('')}
+                                                        className="h-8 px-2 text-xs"
+                                                    >
+                                                        ✕
+                                                    </Button>
+                                                )}
+                                            </div>
+                                        </FormControl>
+                                    </FormItem>
+                                )}
+                            />
                         </div>
 
-                        {/* Row 3: Call Type & Resolution */}
+                        {/* Row 3: Call Type & Outcome */}
                         <div className="grid grid-cols-2 gap-3">
                             <FormField
                                 control={form.control}
                                 name="call_type_id"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+                                        <FormLabel className="text-[11px] font-medium text-muted-foreground flex items-center gap-1">
                                             <Tag className="w-3 h-3" /> Тип звонка
                                         </FormLabel>
                                         <Select value={field.value} onValueChange={field.onChange}>
                                             <FormControl>
-                                                <SelectTrigger className="h-9">
+                                                <SelectTrigger className="h-8">
                                                     <SelectValue placeholder="Выберите..." />
                                                 </SelectTrigger>
                                             </FormControl>
@@ -592,12 +634,12 @@ export function OperatorForm({ externalSelectedScript, onClearExternalScript }: 
                                 name="resolution_id"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel className="text-xs font-medium text-muted-foreground flex items-center gap-1">
-                                            <CheckCircle2 className="w-3 h-3" /> Решение
+                                        <FormLabel className="text-[11px] font-medium text-muted-foreground flex items-center gap-1">
+                                            <CheckCircle2 className="w-3 h-3" /> Исход/результат
                                         </FormLabel>
                                         <Select value={field.value} onValueChange={field.onChange}>
                                             <FormControl>
-                                                <SelectTrigger className="h-9">
+                                                <SelectTrigger className="h-8">
                                                     <SelectValue placeholder="Выберите..." />
                                                 </SelectTrigger>
                                             </FormControl>
@@ -605,7 +647,7 @@ export function OperatorForm({ externalSelectedScript, onClearExternalScript }: 
                                                 {callResolutionsLoading ? (
                                                     <SelectItem value="__loading" disabled>Загрузка...</SelectItem>
                                                 ) : callResolutions?.length === 0 ? (
-                                                    <SelectItem value="__empty" disabled>Нет решений</SelectItem>
+                                                    <SelectItem value="__empty" disabled>Нет исходов</SelectItem>
                                                 ) : (
                                                     callResolutions?.map((r: any) => (
                                                         <SelectItem key={r.id} value={String(r.id)}>{r.name}</SelectItem>
@@ -619,57 +661,19 @@ export function OperatorForm({ externalSelectedScript, onClearExternalScript }: 
                             />
                         </div>
 
-                        {/* Row 4: Gender - inline compact */}
-                        <FormField
-                            control={form.control}
-                            name="caller_gender"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel className="text-xs font-medium text-muted-foreground">Пол</FormLabel>
-                                    <FormControl>
-                                        <div className="flex gap-2">
-                                            <Button
-                                                type="button"
-                                                size="sm"
-                                                variant={field.value === 'М' ? 'default' : 'outline'}
-                                                className={`flex-1 h-8 text-xs ${field.value === 'М' ? 'bg-blue-600 hover:bg-blue-700' : ''}`}
-                                                onClick={() => field.onChange('М')}
-                                            >
-                                                М
-                                            </Button>
-                                            <Button
-                                                type="button"
-                                                size="sm"
-                                                variant={field.value === 'Ж' ? 'default' : 'outline'}
-                                                className={`flex-1 h-8 text-xs ${field.value === 'Ж' ? 'bg-pink-600 hover:bg-pink-700' : ''}`}
-                                                onClick={() => field.onChange('Ж')}
-                                            >
-                                                Ж
-                                            </Button>
-                                            {field.value && (
-                                                <Button type="button" size="sm" variant="ghost" onClick={() => field.onChange('')} className="h-8 px-2 text-xs">
-                                                    ✕
-                                                </Button>
-                                            )}
-                                        </div>
-                                    </FormControl>
-                                </FormItem>
-                            )}
-                        />
-
-                        {/* Row 5: Description - FIXED HEIGHT */}
+                        {/* Appeal */}
                         <FormField
                             control={form.control}
                             name="description"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel className="text-xs font-medium text-muted-foreground flex items-center gap-1">
-                                        <MessageSquare className="w-3 h-3" /> Вопрос / Описание
+                                    <FormLabel className="text-[11px] font-medium text-muted-foreground flex items-center gap-1">
+                                        <MessageSquare className="w-3 h-3" /> Обращение клиента
                                     </FormLabel>
                                     <FormControl>
                                         <Textarea
-                                            placeholder="Опишите суть обращения..."
-                                            className="h-20 resize-none"
+                                            placeholder="Кратко зафиксируйте суть обращения..."
+                                            className="h-16 resize-none text-sm"
                                             {...field}
                                         />
                                     </FormControl>
@@ -678,48 +682,16 @@ export function OperatorForm({ externalSelectedScript, onClearExternalScript }: 
                             )}
                         />
 
-                        {/* Review toggle */}
-                        <div className="rounded-lg border border-amber-200 bg-amber-50/70 p-2.5">
-                            <div className="flex items-center justify-between gap-3">
-                                <label className="text-xs font-medium text-amber-700 flex items-center gap-2">
-                                    <FileQuestion className="w-3 h-3" />
-                                    Отправить вопрос на ревью
-                                </label>
-                                <Checkbox
-                                    checked={reviewEnabled}
-                                    onCheckedChange={(value) => setReviewEnabled(!!value)}
-                                />
-                            </div>
-                            <p className="text-[10px] text-amber-700/80 mt-1">
-                                В реестр пойдёт текст из поля «Вопрос / Описание».
-                            </p>
-                            {reviewEnabled && (
-                                <div className="mt-2">
-                                    <label className="text-[10px] font-medium text-amber-700 mb-1 block">
-                                        Черновик ответа (опционально)
-                                    </label>
-                                    <Textarea
-                                        placeholder="Можно оставить пустым — супервизор добавит"
-                                        className="h-16 resize-none text-xs bg-white/70"
-                                        value={reviewAnswer}
-                                        onChange={(e) => setReviewAnswer(e.target.value)}
-                                    />
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Selected Script Preview */}
+                        {/* Linked script info */}
                         {scriptData && (
-                            <div className="p-2.5 rounded-lg bg-emerald-50 border border-emerald-200">
-                                <div className="flex items-start justify-between gap-2">
-                                    <div className="flex-1 min-w-0">
-                                        <p className="text-[10px] font-medium text-emerald-700 mb-0.5 uppercase tracking-wide">
-                                            {scriptData.is_custom ? 'На ревью' : 'Решение'}
+                            <div className="rounded-lg border border-emerald-200 bg-emerald-50/70 p-2">
+                                <div className="flex items-center justify-between gap-2">
+                                    <div className="min-w-0">
+                                        <p className="text-[10px] font-semibold text-emerald-700 uppercase tracking-wide">
+                                            Скрипт из реестра привязан
                                         </p>
-                                        <p className="text-xs text-foreground line-clamp-2">
-                                            {scriptData.is_custom
-                                                ? scriptData.question
-                                                : scriptData.answer}
+                                        <p className="text-xs text-emerald-900 line-clamp-1">
+                                            {scriptData.question}
                                         </p>
                                     </div>
                                     <Button
@@ -729,27 +701,69 @@ export function OperatorForm({ externalSelectedScript, onClearExternalScript }: 
                                         onClick={() => {
                                             setScriptData(null);
                                             if (onClearExternalScript) onClearExternalScript();
-                                            if (scriptData.is_custom) {
-                                                setReviewEnabled(false);
-                                                setReviewAnswer('');
-                                            }
                                         }}
-                                        className="shrink-0 h-5 w-5 p-0 text-xs"
+                                        className="h-7 px-2 text-[11px] text-emerald-700 hover:text-red-600"
                                     >
-                                        ✕
+                                        <Link2Off className="h-3.5 w-3.5 mr-1" />
+                                        Открепить
                                     </Button>
                                 </div>
                             </div>
                         )}
 
-                        {/* Notes - FIXED HEIGHT */}
+                        {/* Operator answer */}
+                        <div className="space-y-1">
+                            <div className="flex items-center justify-between gap-2">
+                                <label className="text-[11px] font-medium text-muted-foreground flex items-center gap-1">
+                                    <MessageSquare className="w-3 h-3" /> Ответ клиенту (опционально)
+                                </label>
+                                {scriptData?.answer && (
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-6 px-2 text-[10px]"
+                                        onClick={() => setOperatorAnswer(scriptData.answer || '')}
+                                    >
+                                        Подставить из реестра
+                                    </Button>
+                                )}
+                            </div>
+                            <Textarea
+                                placeholder="Как вы ответили клиенту? Можно оставить пустым."
+                                className="h-16 resize-none text-sm"
+                                value={operatorAnswer}
+                                onChange={(e) => setOperatorAnswer(e.target.value)}
+                            />
+                        </div>
+
+                        {/* Review toggle */}
+                        {!scriptData && (
+                            <div className="rounded-lg border border-amber-200 bg-amber-50/70 p-2.5">
+                                <div className="flex items-center justify-between gap-3">
+                                    <label className="text-[11px] font-medium text-amber-700 flex items-center gap-2">
+                                        <FileQuestion className="w-3 h-3" />
+                                        Предложить в реестр (ревью)
+                                    </label>
+                                    <Checkbox
+                                        checked={reviewEnabled}
+                                        onCheckedChange={(value) => setReviewEnabled(!!value)}
+                                    />
+                                </div>
+                                <p className="text-[10px] text-amber-700/80 mt-1">
+                                    В ревью уйдёт «Обращение клиента» + ваш ответ (если заполнен).
+                                </p>
+                            </div>
+                        )}
+
+                        {/* Notes */}
                         <div>
-                            <label className="text-xs font-medium text-muted-foreground mb-1 flex items-center gap-1">
+                            <label className="text-[11px] font-medium text-muted-foreground mb-1 flex items-center gap-1">
                                 <StickyNote className="w-3 h-3" /> Заметки (необязательно)
                             </label>
                             <Textarea
-                                placeholder="Дополнительные заметки..."
-                                className="h-14 resize-none text-sm"
+                                placeholder="Внутренние заметки для истории..."
+                                className="h-12 resize-none text-sm"
                                 value={operatorNotes}
                                 onChange={(e) => setOperatorNotes(e.target.value)}
                             />

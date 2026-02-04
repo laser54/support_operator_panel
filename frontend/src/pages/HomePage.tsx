@@ -16,7 +16,7 @@ export default function HomePage() {
     return (
         <div className="h-[calc(100vh-4rem)] flex gap-0">
             {/* LEFT PANEL: Operator Form - Fixed, No Scroll */}
-            <div className="w-1/2 min-w-[480px] max-w-[640px] border-r border-border/50 bg-background">
+            <div className="w-[720px] min-w-[680px] max-w-[760px] border-r border-border/50 bg-background">
                 <OperatorForm
                     externalSelectedScript={selectedScript}
                     onClearExternalScript={() => setSelectedScript(null)}
