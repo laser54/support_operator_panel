@@ -23,7 +23,7 @@ import {
     Pie,
     Cell,
 } from 'recharts';
-import { Loader2, Phone, Clock, Users, TrendingUp, MessageCircle } from 'lucide-react';
+import { Loader2, Phone, Clock, Users, TrendingUp, MessageCircle, ChevronDown } from 'lucide-react';
 
 type Call = {
     id: number;
@@ -113,8 +113,7 @@ function normalizeQuestion(value: string) {
 
 function getCallSource(call: Call) {
     if (call.script?.answer) return 'script';
-    if (call.notes) return 'notes';
-    if (call.solution) return 'solution';
+    if (call.notes || call.solution) return 'manual';
     return 'none';
 }
 
@@ -122,10 +121,8 @@ function getSourceLabel(source: string) {
     switch (source) {
         case 'script':
             return 'Скрипт';
-        case 'notes':
-            return 'Заметка';
-        case 'solution':
-            return 'Решение';
+        case 'manual':
+            return 'Ответ оператора';
         case 'none':
             return 'Без ответа';
         default:
@@ -147,6 +144,7 @@ export default function DashboardPage() {
     const { data: currentUser } = useCurrentUser();
     const isPrivileged = currentUser?.effective_role !== 'operator';
     const [filters, setFilters] = useState<Filters>(defaultFilters);
+    const [filtersOpen, setFiltersOpen] = useState(false);
     const [selectedOperatorId, setSelectedOperatorId] = useState<number | null>(null);
     const [selectedQuestionKey, setSelectedQuestionKey] = useState<string | null>(null);
 
@@ -330,6 +328,23 @@ export default function DashboardPage() {
             .slice(0, 8);
     }, [filteredCalls, selectedQuestionKey]);
 
+    const activeFilterBadges = useMemo(() => {
+        const badges: string[] = [];
+        if (filters.dateFrom) badges.push(`С ${filters.dateFrom}`);
+        if (filters.dateTo) badges.push(`По ${filters.dateTo}`);
+        if (filters.search) badges.push(`Поиск: ${filters.search}`);
+        if (filters.operatorId && isPrivileged) {
+            const operatorName =
+                users?.find((user) => user.id === Number(filters.operatorId))?.username || `#${filters.operatorId}`;
+            badges.push(`Оператор: ${operatorName}`);
+        }
+        if (filters.gender !== 'all') badges.push(`Пол: ${filters.gender}`);
+        if (filters.source !== 'all') badges.push(`Источник: ${getSourceLabel(filters.source)}`);
+        if (filters.minDuration) badges.push(`Длит. от: ${filters.minDuration}с`);
+        if (filters.maxDuration) badges.push(`Длит. до: ${filters.maxDuration}с`);
+        return badges;
+    }, [filters, isPrivileged, users]);
+
     if (isLoading) {
         return (
             <div className="flex h-[400px] items-center justify-center">
@@ -358,128 +373,149 @@ export default function DashboardPage() {
 
             <Card>
                 <CardHeader className="pb-2">
-                    <CardTitle className="text-base">Фильтры</CardTitle>
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                        <CardTitle className="text-base">Фильтры</CardTitle>
+                        <Button variant="ghost" size="sm" onClick={() => setFiltersOpen((prev) => !prev)}>
+                            {filtersOpen ? 'Скрыть' : 'Показать'}
+                            <ChevronDown
+                                className={`ml-2 h-4 w-4 transition ${filtersOpen ? 'rotate-180' : ''}`}
+                            />
+                        </Button>
+                    </div>
                 </CardHeader>
                 <CardContent>
-                    <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-6">
-                        <div className="space-y-1">
-                            <Label htmlFor="dateFrom">С даты</Label>
-                            <Input
-                                id="dateFrom"
-                                type="date"
-                                value={filters.dateFrom}
-                                onChange={(e) => setFilters({ ...filters, dateFrom: e.target.value })}
-                            />
-                        </div>
-                        <div className="space-y-1">
-                            <Label htmlFor="dateTo">По дату</Label>
-                            <Input
-                                id="dateTo"
-                                type="date"
-                                value={filters.dateTo}
-                                onChange={(e) => setFilters({ ...filters, dateTo: e.target.value })}
-                            />
-                        </div>
-                        <div className="space-y-1">
-                            <Label htmlFor="search">Поиск</Label>
-                            <Input
-                                id="search"
-                                placeholder="Вопрос, заметки, решение..."
-                                value={filters.search}
-                                onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-                            />
-                        </div>
-                        {isPrivileged && (
+                    {filtersOpen ? (
+                        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-6">
                             <div className="space-y-1">
-                                <Label htmlFor="operator">Оператор</Label>
+                                <Label htmlFor="dateFrom">С даты</Label>
+                                <Input
+                                    id="dateFrom"
+                                    type="date"
+                                    value={filters.dateFrom}
+                                    onChange={(e) => setFilters({ ...filters, dateFrom: e.target.value })}
+                                />
+                            </div>
+                            <div className="space-y-1">
+                                <Label htmlFor="dateTo">По дату</Label>
+                                <Input
+                                    id="dateTo"
+                                    type="date"
+                                    value={filters.dateTo}
+                                    onChange={(e) => setFilters({ ...filters, dateTo: e.target.value })}
+                                />
+                            </div>
+                            <div className="space-y-1">
+                                <Label htmlFor="search">Поиск</Label>
+                                <Input
+                                    id="search"
+                                    placeholder="Вопрос, заметки, решение..."
+                                    value={filters.search}
+                                    onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+                                />
+                            </div>
+                            {isPrivileged && (
+                                <div className="space-y-1">
+                                    <Label htmlFor="operator">Оператор</Label>
+                                    <Select
+                                        value={filters.operatorId || 'all'}
+                                        onValueChange={(value) =>
+                                            setFilters({ ...filters, operatorId: value === 'all' ? '' : value })
+                                        }
+                                    >
+                                        <SelectTrigger id="operator">
+                                            <SelectValue placeholder="Все операторы" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="all">Все</SelectItem>
+                                            {(users || [])
+                                                .filter((user) => user.is_active)
+                                                .map((user) => (
+                                                    <SelectItem key={user.id} value={String(user.id)}>
+                                                        {user.username} ({user.role})
+                                                    </SelectItem>
+                                                ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            )}
+                            <div className="space-y-1">
+                                <Label htmlFor="gender">Пол</Label>
                                 <Select
-                                    value={filters.operatorId || 'all'}
-                                    onValueChange={(value) =>
-                                        setFilters({ ...filters, operatorId: value === 'all' ? '' : value })
-                                    }
+                                    value={filters.gender}
+                                    onValueChange={(value) => setFilters({ ...filters, gender: value })}
                                 >
-                                    <SelectTrigger id="operator">
-                                        <SelectValue placeholder="Все операторы" />
+                                    <SelectTrigger id="gender">
+                                        <SelectValue placeholder="Все" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="all">Все</SelectItem>
-                                        {(users || [])
-                                            .filter((user) => user.is_active)
-                                            .map((user) => (
-                                                <SelectItem key={user.id} value={String(user.id)}>
-                                                    {user.username} ({user.role})
-                                                </SelectItem>
-                                            ))}
+                                        {genderOptions.map((item) => (
+                                            <SelectItem key={item} value={item}>
+                                                {item === 'all' ? 'Все' : item}
+                                            </SelectItem>
+                                        ))}
                                     </SelectContent>
                                 </Select>
                             </div>
-                        )}
-                        <div className="space-y-1">
-                            <Label htmlFor="gender">Пол</Label>
-                            <Select
-                                value={filters.gender}
-                                onValueChange={(value) => setFilters({ ...filters, gender: value })}
-                            >
-                                <SelectTrigger id="gender">
-                                    <SelectValue placeholder="Все" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {genderOptions.map((item) => (
-                                        <SelectItem key={item} value={item}>
-                                            {item === 'all' ? 'Все' : item}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                            <div className="space-y-1">
+                                <Label htmlFor="source">Источник ответа</Label>
+                                <Select
+                                    value={filters.source}
+                                    onValueChange={(value) => setFilters({ ...filters, source: value })}
+                                >
+                                    <SelectTrigger id="source">
+                                        <SelectValue placeholder="Все" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">Все</SelectItem>
+                                        <SelectItem value="script">Скрипт</SelectItem>
+                                        <SelectItem value="manual">Ответ оператора</SelectItem>
+                                        <SelectItem value="none">Без ответа</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="space-y-1">
+                                <Label htmlFor="minDuration">Длительность от (сек)</Label>
+                                <Input
+                                    id="minDuration"
+                                    type="number"
+                                    min={0}
+                                    value={filters.minDuration}
+                                    onChange={(e) => setFilters({ ...filters, minDuration: e.target.value })}
+                                />
+                            </div>
+                            <div className="space-y-1">
+                                <Label htmlFor="maxDuration">Длительность до (сек)</Label>
+                                <Input
+                                    id="maxDuration"
+                                    type="number"
+                                    min={0}
+                                    value={filters.maxDuration}
+                                    onChange={(e) => setFilters({ ...filters, maxDuration: e.target.value })}
+                                />
+                            </div>
+                            <div className="flex items-end">
+                                <Button
+                                    variant="outline"
+                                    className="w-full"
+                                    onClick={() => setFilters(defaultFilters)}
+                                >
+                                    Сбросить
+                                </Button>
+                            </div>
                         </div>
-                        <div className="space-y-1">
-                            <Label htmlFor="source">Источник ответа</Label>
-                            <Select
-                                value={filters.source}
-                                onValueChange={(value) => setFilters({ ...filters, source: value })}
-                            >
-                                <SelectTrigger id="source">
-                                    <SelectValue placeholder="Все" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">Все</SelectItem>
-                                    <SelectItem value="script">Скрипт</SelectItem>
-                                    <SelectItem value="solution">Решение</SelectItem>
-                                    <SelectItem value="notes">Заметка</SelectItem>
-                                    <SelectItem value="none">Без ответа</SelectItem>
-                                </SelectContent>
-                            </Select>
+                    ) : (
+                        <div className="flex flex-wrap items-center gap-2">
+                            {activeFilterBadges.length ? (
+                                activeFilterBadges.map((item) => (
+                                    <Badge key={item} variant="outline">
+                                        {item}
+                                    </Badge>
+                                ))
+                            ) : (
+                                <span className="text-sm text-muted-foreground">Фильтры не заданы</span>
+                            )}
                         </div>
-                        <div className="space-y-1">
-                            <Label htmlFor="minDuration">Длительность от (сек)</Label>
-                            <Input
-                                id="minDuration"
-                                type="number"
-                                min={0}
-                                value={filters.minDuration}
-                                onChange={(e) => setFilters({ ...filters, minDuration: e.target.value })}
-                            />
-                        </div>
-                        <div className="space-y-1">
-                            <Label htmlFor="maxDuration">Длительность до (сек)</Label>
-                            <Input
-                                id="maxDuration"
-                                type="number"
-                                min={0}
-                                value={filters.maxDuration}
-                                onChange={(e) => setFilters({ ...filters, maxDuration: e.target.value })}
-                            />
-                        </div>
-                        <div className="flex items-end">
-                            <Button
-                                variant="outline"
-                                className="w-full"
-                                onClick={() => setFilters(defaultFilters)}
-                            >
-                                Сбросить
-                            </Button>
-                        </div>
-                    </div>
+                    )}
                 </CardContent>
             </Card>
 
@@ -524,12 +560,12 @@ export default function DashboardPage() {
                         </Card>
                         <Card>
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-sm font-medium">Решено</CardTitle>
+                                <CardTitle className="text-sm font-medium">С ответом</CardTitle>
                                 <MessageCircle className="h-4 w-4 text-muted-foreground" />
                             </CardHeader>
                             <CardContent>
                                 <div className="text-2xl font-bold">{resolutionRate}%</div>
-                                <p className="text-xs text-muted-foreground">С ответом/заметкой</p>
+                                <p className="text-xs text-muted-foreground">Скрипт или ответ оператора</p>
                             </CardContent>
                         </Card>
                         <Card>

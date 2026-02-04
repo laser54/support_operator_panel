@@ -194,8 +194,8 @@ export default function AppLayout() {
                 </div>
             </header>
 
-            {/* Main Content - Full height, no scroll on page level */}
-            <main className="flex-1 overflow-hidden">
+            {/* Main Content - allow page scroll */}
+            <main className="flex-1 overflow-y-auto">
                 <Outlet />
             </main>
         </div>
