@@ -69,6 +69,8 @@ export function OperatorForm({ externalSelectedScript, onClearExternalScript }: 
     const [reviewAnswer, setReviewAnswer] = useState('');
     const [showConfirmDialog, setShowConfirmDialog] = useState(false);
     const [previewData, setPreviewData] = useState<CallPreviewData | null>(null);
+    const [regionSearch, setRegionSearch] = useState('');
+    const [departmentSearch, setDepartmentSearch] = useState('');
 
     const form = useForm<CallFormValues>({
         resolver: zodResolver(callSchema),
@@ -163,6 +165,23 @@ export function OperatorForm({ externalSelectedScript, onClearExternalScript }: 
         const regionId = parseInt(selectedRegionId, 10);
         return departments.filter((d: any) => d.region_id === regionId);
     }, [departments, selectedRegionId]);
+
+    const visibleRegions = useMemo(() => {
+        if (!regions) return [];
+        const query = regionSearch.trim().toLowerCase();
+        if (!query) return regions;
+        return regions.filter((r: any) =>
+            String(r?.name ?? '').toLowerCase().includes(query)
+        );
+    }, [regions, regionSearch]);
+
+    const visibleDepartments = useMemo(() => {
+        const query = departmentSearch.trim().toLowerCase();
+        if (!query) return filteredDepartments;
+        return filteredDepartments.filter((d: any) =>
+            String(d?.name ?? '').toLowerCase().includes(query)
+        );
+    }, [filteredDepartments, departmentSearch]);
 
     useEffect(() => {
         if (!selectedRegionId) return;
@@ -405,19 +424,38 @@ export function OperatorForm({ externalSelectedScript, onClearExternalScript }: 
                                         <FormLabel className="text-xs font-medium text-muted-foreground flex items-center gap-1">
                                             <MapPin className="w-3 h-3" /> Регион
                                         </FormLabel>
-                                        <Select value={field.value} onValueChange={field.onChange}>
+                                        <Select
+                                            value={field.value}
+                                            onValueChange={field.onChange}
+                                            onOpenChange={(open) => {
+                                                if (!open) setRegionSearch('');
+                                            }}
+                                        >
                                             <FormControl>
                                                 <SelectTrigger className="h-9">
                                                     <SelectValue placeholder="Выберите..." />
                                                 </SelectTrigger>
                                             </FormControl>
                                             <SelectContent>
+                                                <div className="p-2">
+                                                    <Input
+                                                        value={regionSearch}
+                                                        onChange={(e) => setRegionSearch(e.target.value)}
+                                                        onKeyDown={(e) => e.stopPropagation()}
+                                                        placeholder="Поиск региона..."
+                                                        className="h-8"
+                                                        autoComplete="off"
+                                                        aria-label="Поиск региона"
+                                                    />
+                                                </div>
                                                 {regionsLoading ? (
                                                     <SelectItem value="__loading" disabled>Загрузка...</SelectItem>
                                                 ) : regions?.length === 0 ? (
                                                     <SelectItem value="__empty" disabled>Нет регионов</SelectItem>
+                                                ) : visibleRegions.length === 0 ? (
+                                                    <SelectItem value="__no_results" disabled>Ничего не найдено</SelectItem>
                                                 ) : (
-                                                    regions?.map((r: any) => (
+                                                    visibleRegions.map((r: any) => (
                                                         <SelectItem key={r.id} value={String(r.id)}>{r.name}</SelectItem>
                                                     ))
                                                 )}
@@ -436,19 +474,40 @@ export function OperatorForm({ externalSelectedScript, onClearExternalScript }: 
                                         <FormLabel className="text-xs font-medium text-muted-foreground flex items-center gap-1">
                                             <Building2 className="w-3 h-3" /> Отдел
                                         </FormLabel>
-                                        <Select value={field.value} onValueChange={field.onChange} disabled={!selectedRegionId}>
+                                        <Select
+                                            value={field.value}
+                                            onValueChange={field.onChange}
+                                            disabled={!selectedRegionId}
+                                            onOpenChange={(open) => {
+                                                if (!open) setDepartmentSearch('');
+                                            }}
+                                        >
                                             <FormControl>
                                                 <SelectTrigger className="h-9">
                                                     <SelectValue placeholder={!selectedRegionId ? '← Регион' : 'Выберите...'} />
                                                 </SelectTrigger>
                                             </FormControl>
                                             <SelectContent>
+                                                <div className="p-2">
+                                                    <Input
+                                                        value={departmentSearch}
+                                                        onChange={(e) => setDepartmentSearch(e.target.value)}
+                                                        onKeyDown={(e) => e.stopPropagation()}
+                                                        placeholder="Поиск отдела..."
+                                                        className="h-8"
+                                                        autoComplete="off"
+                                                        aria-label="Поиск отдела"
+                                                        disabled={!selectedRegionId}
+                                                    />
+                                                </div>
                                                 {filteredDepartments.length === 0 ? (
                                                     <SelectItem value="__empty" disabled>
                                                         {!selectedRegionId ? 'Сначала выберите регион' : 'Нет отделов'}
                                                     </SelectItem>
+                                                ) : visibleDepartments.length === 0 ? (
+                                                    <SelectItem value="__no_results" disabled>Ничего не найдено</SelectItem>
                                                 ) : (
-                                                    filteredDepartments.map((d: any) => (
+                                                    visibleDepartments.map((d: any) => (
                                                         <SelectItem key={d.id} value={String(d.id)}>{d.name}</SelectItem>
                                                     ))
                                                 )}

@@ -68,6 +68,8 @@ export function CallForm({ externalSelectedScript, onClearExternalScript }: Call
     const startTimeRef = useRef<number | null>(null);
     const [scriptData, setScriptData] = useState<ScriptSelection | null>(null);
     const [operatorNotes, setOperatorNotes] = useState('');
+    const [regionSearch, setRegionSearch] = useState('');
+    const [departmentSearch, setDepartmentSearch] = useState('');
 
     const form = useForm<CallFormValues>({
         resolver: zodResolver(callSchema),
@@ -133,6 +135,23 @@ export function CallForm({ externalSelectedScript, onClearExternalScript }: Call
         const regionId = parseInt(selectedRegionId, 10);
         return departments.filter((d: any) => d.region_id === regionId);
     }, [departments, selectedRegionId]);
+
+    const visibleRegions = useMemo(() => {
+        if (!regions) return [];
+        const query = regionSearch.trim().toLowerCase();
+        if (!query) return regions;
+        return regions.filter((r: any) =>
+            String(r?.name ?? '').toLowerCase().includes(query)
+        );
+    }, [regions, regionSearch]);
+
+    const visibleDepartments = useMemo(() => {
+        const query = departmentSearch.trim().toLowerCase();
+        if (!query) return filteredDepartments;
+        return filteredDepartments.filter((d: any) =>
+            String(d?.name ?? '').toLowerCase().includes(query)
+        );
+    }, [filteredDepartments, departmentSearch]);
 
     useEffect(() => {
         if (!selectedRegionId) return;
@@ -410,13 +429,30 @@ export function CallForm({ externalSelectedScript, onClearExternalScript }: Call
                         render={({ field }) => (
                             <FormItem>
                                 <FormLabel>Region</FormLabel>
-                                <Select value={field.value} onValueChange={field.onChange}>
+                                <Select
+                                    value={field.value}
+                                    onValueChange={field.onChange}
+                                    onOpenChange={(open) => {
+                                        if (!open) setRegionSearch('');
+                                    }}
+                                >
                                     <FormControl>
                                         <SelectTrigger>
                                             <SelectValue placeholder="Выберите регион" />
                                         </SelectTrigger>
                                     </FormControl>
                                     <SelectContent>
+                                        <div className="p-2">
+                                            <Input
+                                                value={regionSearch}
+                                                onChange={(e) => setRegionSearch(e.target.value)}
+                                                onKeyDown={(e) => e.stopPropagation()}
+                                                placeholder="Поиск региона..."
+                                                className="h-8"
+                                                autoComplete="off"
+                                                aria-label="Поиск региона"
+                                            />
+                                        </div>
                                         {regionsLoading ? (
                                             <SelectItem value="__loading" disabled>
                                                 Загрузка...
@@ -429,8 +465,12 @@ export function CallForm({ externalSelectedScript, onClearExternalScript }: Call
                                             <SelectItem value="__empty" disabled>
                                                 Нет доступных регионов
                                             </SelectItem>
+                                        ) : visibleRegions.length === 0 ? (
+                                            <SelectItem value="__no_results" disabled>
+                                                Ничего не найдено
+                                            </SelectItem>
                                         ) : (
-                                            regions.map((r: any) => (
+                                            visibleRegions.map((r: any) => (
                                                 <SelectItem key={r.id} value={String(r.id)}>
                                                     {r.name}
                                                 </SelectItem>
@@ -453,6 +493,9 @@ export function CallForm({ externalSelectedScript, onClearExternalScript }: Call
                                     value={field.value}
                                     onValueChange={field.onChange}
                                     disabled={isDepartmentDisabled}
+                                    onOpenChange={(open) => {
+                                        if (!open) setDepartmentSearch('');
+                                    }}
                                 >
                                     <FormControl>
                                         <SelectTrigger>
@@ -466,6 +509,18 @@ export function CallForm({ externalSelectedScript, onClearExternalScript }: Call
                                         </SelectTrigger>
                                     </FormControl>
                                     <SelectContent>
+                                        <div className="p-2">
+                                            <Input
+                                                value={departmentSearch}
+                                                onChange={(e) => setDepartmentSearch(e.target.value)}
+                                                onKeyDown={(e) => e.stopPropagation()}
+                                                placeholder="Поиск департамента..."
+                                                className="h-8"
+                                                autoComplete="off"
+                                                aria-label="Поиск департамента"
+                                                disabled={isDepartmentDisabled}
+                                            />
+                                        </div>
                                         {departmentsLoading ? (
                                             <SelectItem value="__loading" disabled>
                                                 Загрузка...
@@ -480,8 +535,12 @@ export function CallForm({ externalSelectedScript, onClearExternalScript }: Call
                                                     ? 'Сначала выберите регион'
                                                     : 'Нет департаментов для этого региона'}
                                             </SelectItem>
+                                        ) : visibleDepartments.length === 0 ? (
+                                            <SelectItem value="__no_results" disabled>
+                                                Ничего не найдено
+                                            </SelectItem>
                                         ) : (
-                                            filteredDepartments.map((d: any) => (
+                                            visibleDepartments.map((d: any) => (
                                                 <SelectItem key={d.id} value={String(d.id)}>
                                                     {d.name}
                                                 </SelectItem>
