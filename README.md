@@ -1,257 +1,374 @@
 # Support Operator Panel
 
-Веб-приложение для операторов контакт-центра с AI-поиском и аналитикой.
+<div align="center">
+
+![PAYLINE](https://img.shields.io/badge/PAYLINE-Contact_Center-D4F62F?style=for-the-badge&logoColor=black)
+
+**Современная веб-панель для операторов контакт-центра с AI-поиском по базе знаний и аналитикой в реальном времени**
+
+[![React](https://img.shields.io/badge/React-19.x-61DAFB?style=flat-square&logo=react&logoColor=white)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?style=flat-square&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![Python](https://img.shields.io/badge/Python-3.12+-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?style=flat-square&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+[![TailwindCSS](https://img.shields.io/badge/Tailwind-3.4-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
+[![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=flat-square&logo=docker&logoColor=white)](https://www.docker.com/)
+
+</div>
+
+---
+
+## ✨ Возможности
+
+<table>
+<tr>
+<td width="50%">
+
+### 🎯 Для операторов
+- **Единое рабочее место** — форма звонка + база знаний на одном экране
+- **AI-поиск** — мгновенный поиск ответов по базе знаний
+- **Таймер звонка** — автоматический запуск при заполнении формы
+- **Топ вопросов** — частые вопросы за период
+- **Горячие клавиши** — `Ctrl+Enter` сохранить, `Ctrl+S` поиск
+
+</td>
+<td width="50%">
+
+### 📊 Для руководителей
+- **Аналитический дашборд** — KPI, графики, статистика
+- **История звонков** — поиск, фильтры, редактирование
+- **Управление пользователями** — роли, временные права
+- **Справочники** — регионы, отделы, типы звонков
+- **Ревью скриптов** — модерация предложений операторов
+
+</td>
+</tr>
+</table>
+
+---
+
+## 🛠 Технологический стек
+
+<table>
+<tr>
+<td align="center" width="25%">
+
+**Frontend**
+
+![React](https://img.shields.io/badge/-React_19-61DAFB?style=flat-square&logo=react&logoColor=black)
+![TypeScript](https://img.shields.io/badge/-TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white)
+![Vite](https://img.shields.io/badge/-Vite-646CFF?style=flat-square&logo=vite&logoColor=white)
+![TanStack Query](https://img.shields.io/badge/-TanStack_Query-FF4154?style=flat-square&logo=reactquery&logoColor=white)
+![Tailwind](https://img.shields.io/badge/-Tailwind-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)
+![shadcn/ui](https://img.shields.io/badge/-shadcn/ui-000000?style=flat-square&logo=shadcnui&logoColor=white)
+
+</td>
+<td align="center" width="25%">
+
+**Backend**
+
+![FastAPI](https://img.shields.io/badge/-FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white)
+![Python](https://img.shields.io/badge/-Python_3.12-3776AB?style=flat-square&logo=python&logoColor=white)
+![SQLAlchemy](https://img.shields.io/badge/-SQLAlchemy-D71F00?style=flat-square&logo=sqlalchemy&logoColor=white)
+![Pydantic](https://img.shields.io/badge/-Pydantic_v2-E92063?style=flat-square&logo=pydantic&logoColor=white)
+![JWT](https://img.shields.io/badge/-JWT-000000?style=flat-square&logo=jsonwebtokens&logoColor=white)
+
+</td>
+<td align="center" width="25%">
+
+**Database**
+
+![PostgreSQL](https://img.shields.io/badge/-PostgreSQL_16-4169E1?style=flat-square&logo=postgresql&logoColor=white)
+![Alembic](https://img.shields.io/badge/-Alembic-6BA81E?style=flat-square&logo=alembic&logoColor=white)
+
+</td>
+<td align="center" width="25%">
+
+**DevOps**
+
+![Docker](https://img.shields.io/badge/-Docker-2496ED?style=flat-square&logo=docker&logoColor=white)
+![GitHub Actions](https://img.shields.io/badge/-GitHub_Actions-2088FF?style=flat-square&logo=githubactions&logoColor=white)
+![Nginx](https://img.shields.io/badge/-Nginx-009639?style=flat-square&logo=nginx&logoColor=white)
+
+</td>
+</tr>
+</table>
+
+---
 
 ## 🚀 Быстрый старт
 
-### Предварительные требования
+### Требования
 
-- Docker Desktop (с включенной WSL 2 интеграцией)
-- WSL 2 (Ubuntu или другой дистрибутив)
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) с WSL 2 (для Windows)
 - Git
 
-#### Настройка WSL (если используете Windows)
-
-1. **Установите make в WSL**:
-   ```bash
-   sudo apt-get update
-   sudo apt-get install -y make
-   ```
-
-2. **Убедитесь, что Docker Desktop интегрирован с WSL**:
-   - Откройте Docker Desktop
-   - Settings → Resources → WSL Integration
-   - Включите интеграцию для вашего дистрибутива WSL
-
-3. **Проверьте Docker в WSL**:
-   ```bash
-   docker --version
-   docker-compose --version
-   ```
-
-### Запуск проекта
-
-**Для Git Bash (Windows):**
-
-1. **Запустите все сервисы**:
-   ```bash
-   docker-compose up --build -d
-   ```
-
-2. **Примените миграции**:
-   ```bash
-   docker-compose exec backend uv run alembic upgrade head
-   ```
-
-3. **Создайте тестового пользователя**:
-   ```bash
-   docker-compose exec backend uv run python create_admin.py
-   ```
-
-4. **Проверьте работу**:
-   - API Docs: http://localhost:8000/docs
-   - Frontend: http://localhost:3001
-   - Health check: http://localhost:8000/
-
-**Тестовые данные:**
-- Username: `admin`
-- Password: `admin`
-
-**Для WSL/Linux (если установлен make):**
-
-1. **Запустите все сервисы**:
-   ```bash
-   make dev
-   ```
-
-2. **В новом терминале примените миграции**:
-   ```bash
-   docker-compose exec backend uv run alembic upgrade head
-   ```
-
-3. **Создайте админа**:
-   ```bash
-   docker-compose exec backend uv run python create_admin.py
-   ```
-
-## 📋 Доступные команды
+### Запуск
 
 ```bash
-make dev          # Запустить все сервисы с hot reload
-make up           # Запустить в фоновом режиме
-make down         # Остановить все сервисы
-make db-migrate   # Применить миграции
-make db-shell     # Подключиться к PostgreSQL
-make lint         # Проверить код (ruff)
-make lint-fix     # Исправить код автоматически
+# 1. Клонировать репозиторий
+git clone https://github.com/your-org/support_operator_panel.git
+cd support_operator_panel
+
+# 2. Запустить все сервисы
+docker-compose up --build -d
+
+# 3. Применить миграции
+docker-compose exec backend uv run alembic upgrade head
+
+# 4. Создать администратора
+docker-compose exec backend uv run python create_admin.py
+
+# 5. (Опционально) Загрузить тестовые данные
+docker-compose exec backend uv run python load_fixtures.py
 ```
 
-## 🧪 Тестирование API
+### Доступ
 
-### Через Swagger UI
+| Сервис | URL |
+|--------|-----|
+| 🌐 Frontend | http://localhost:3001 |
+| 📚 API Docs | http://localhost:8000/docs |
+| 🔧 API Health | http://localhost:8000/ |
 
-1. Откройте http://localhost:8000/docs
-2. Нажмите на `/api/v1/auth/login`
-3. Нажмите "Try it out"
-4. Введите:
-   - username: `admin`
-   - password: `admin`
-5. Нажмите "Execute"
-6. Скопируйте `access_token` из ответа
-7. Нажмите "Authorize" вверху страницы
-8. Вставьте токен в формате: `Bearer <your-token>`
-9. Теперь можете тестировать защищенные эндпоинты
-
-### Через curl
-
-```bash
-# Получить токен
-curl -X POST "http://localhost:8000/api/v1/auth/login" \
-  -H "Content-Type: application/x-www-form-urlencoded" \
-  -d "username=admin&password=admin"
-
-# Использовать токен
-TOKEN="<your-token>"
-curl -X GET "http://localhost:8000/api/v1/auth/me" \
-  -H "Authorization: Bearer $TOKEN"
-
-# Получить список регионов
-curl -X GET "http://localhost:8000/api/v1/regions" \
-  -H "Authorization: Bearer $TOKEN"
+**Тестовый вход:**
+```
+Username: admin
+Password: admin
 ```
 
-## ⚙️ Configuration & Environments
-
-### Environment Variables (.env)
-
-**Backend:**
-Copy `.env.example` to `.env`:
-```ini
-DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/support_panel
-SECRET_KEY=...
-FRONTEND_URL=http://localhost:5173
-```
-
-**Frontend:**
-Create `frontend/.env`:
-```ini
-VITE_API_URL=http://localhost:8888/api/v1
-FRONTEND_URL=http://localhost:3001
-```
-For QA/Production, update `VITE_API_URL` accordingly.
-
-### External Resources
-- **External Knowledge Base**: Configured via `KNOWLEDGE_BASE_URL` in `.env`.
-  - *Note: This is the source for the Q&A database.*
-  - Do NOT hardcode this URL. Use environment variables if integration is needed.
+---
 
 ## 📁 Структура проекта
 
 ```
 support_operator_panel/
-├── backend/          # FastAPI приложение
-│   ├── app/
-│   │   ├── api/      # API endpoints
-│   │   ├── core/     # Конфигурация и безопасность
-│   │   ├── db/       # База данных
-│   │   ├── models/   # SQLAlchemy модели
-│   │   └── schemas/  # Pydantic схемы
-│   └── alembic/      # Миграции
-├── frontend/         # React приложение
-│   └── src/
-├── docs/             # Документация проекта
-└── docker-compose.yml
+├── 📂 backend/                 # FastAPI приложение
+│   ├── 📂 app/
+│   │   ├── 📂 api/v1/          # REST API endpoints
+│   │   │   ├── auth.py         # Аутентификация (JWT)
+│   │   │   ├── calls.py        # CRUD звонков
+│   │   │   ├── users.py        # Управление пользователями
+│   │   │   ├── scripts.py      # Скрипты и ревью
+│   │   │   ├── search.py       # AI-поиск по базе знаний
+│   │   │   └── ...             # Справочники
+│   │   ├── 📂 models/          # SQLAlchemy ORM модели
+│   │   ├── 📂 schemas/         # Pydantic валидация
+│   │   ├── 📂 services/        # Бизнес-логика
+│   │   └── 📂 core/            # Конфигурация, безопасность
+│   ├── 📂 alembic/             # Миграции БД
+│   └── 📂 fixtures/            # Тестовые данные
+│
+├── 📂 frontend/                # React SPA
+│   └── 📂 src/
+│       ├── 📂 pages/           # Страницы приложения
+│       │   ├── HomePage.tsx    # Рабочее место оператора
+│       │   ├── HistoryPage.tsx # История звонков
+│       │   ├── DashboardPage.tsx # Аналитика
+│       │   ├── UsersPage.tsx   # Управление пользователями
+│       │   └── ...
+│       ├── 📂 components/      # React компоненты
+│       │   ├── OperatorForm.tsx    # Форма звонка
+│       │   ├── KnowledgePanel.tsx  # Панель базы знаний
+│       │   ├── 📂 ui/              # shadcn/ui компоненты
+│       │   └── 📂 layout/          # Layout компоненты
+│       ├── 📂 api/             # Axios клиент
+│       └── 📂 hooks/           # Custom React hooks
+│
+├── 📂 docs/                    # Документация
+├── 📂 .github/workflows/       # CI/CD
+└── docker-compose.yml          # Docker конфигурация
 ```
 
-## 🛠 Разработка
+---
 
-### Backend
+## 👥 Роли и права
 
+| Роль | Описание | Доступ |
+|------|----------|--------|
+| **Operator** | Оператор контакт-центра | Звонки, история (свои), поиск |
+| **Supervisor** | Руководитель группы | + Дашборд, ревью скриптов, все звонки |
+| **Admin** | Администратор | + Пользователи, справочники |
+
+> 💡 Поддерживаются **временные роли** — можно выдать повышенные права на определённый срок
+
+---
+
+## ⌨️ Горячие клавиши
+
+| Комбинация | Действие |
+|------------|----------|
+| `Ctrl + Enter` | Сохранить звонок |
+| `Ctrl + S` | Фокус на поиск в базе знаний |
+| `Escape` | Очистить форму (с подтверждением) |
+
+---
+
+## 🔧 Команды разработки
+
+### Make (WSL/Linux)
+
+```bash
+make dev          # Запустить с hot reload
+make up           # Запустить в фоне
+make down         # Остановить
+make db-migrate   # Применить миграции
+make db-shell     # Подключиться к PostgreSQL
+make lint         # Проверить код
+make lint-fix     # Автоисправление
+```
+
+### Docker (любая ОС)
+
+```bash
+docker-compose up --build -d          # Запустить
+docker-compose down                   # Остановить
+docker-compose logs -f backend        # Логи бэкенда
+docker-compose exec backend uv run alembic upgrade head  # Миграции
+```
+
+### Локальная разработка
+
+**Backend:**
 ```bash
 cd backend
-
-# Установить зависимости
-uv sync
-
-# Запустить локально (без Docker)
-uv run uvicorn app.main:app --reload
-
-# Создать новую миграцию
-make db-revision msg="description"
-
-# Линтинг
-make lint
-make lint-fix
+uv sync                                    # Установить зависимости
+uv run uvicorn app.main:app --reload       # Запустить dev server
+uv run alembic revision --autogenerate -m "msg"  # Создать миграцию
 ```
 
-### Frontend
-
+**Frontend:**
 ```bash
 cd frontend
-
-# Установить зависимости
-pnpm install
-
-# Запустить dev server
-pnpm dev
-
-# Собрать для продакшена
-pnpm build
+pnpm install        # Установить зависимости
+pnpm dev            # Запустить dev server
+pnpm build          # Сборка для продакшена
+pnpm lint           # Проверка ESLint
 ```
+
+---
+
+## ⚙️ Конфигурация
+
+### Backend (.env)
+
+```ini
+DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/support_panel
+SECRET_KEY=your-secret-key-here
+FRONTEND_URL=http://localhost:3001
+KNOWLEDGE_BASE_URL=https://your-kb-api.com
+KNOWLEDGE_BASE_PASSWORD=secret
+```
+
+### Frontend (frontend/.env)
+
+```ini
+VITE_API_URL=http://localhost:8000/api/v1
+```
+
+---
+
+## 📊 API Endpoints
+
+<details>
+<summary><b>Развернуть полный список</b></summary>
+
+| Method | Endpoint | Описание | Роль |
+|--------|----------|----------|------|
+| `POST` | `/api/v1/auth/login` | Вход | Все |
+| `GET` | `/api/v1/auth/me` | Текущий пользователь | Все |
+| `GET` | `/api/v1/calls` | Список звонков | Все* |
+| `POST` | `/api/v1/calls` | Создать звонок | Все |
+| `PATCH` | `/api/v1/calls/{id}` | Редактировать звонок | Все* |
+| `GET` | `/api/v1/search` | Поиск в базе знаний | Все |
+| `GET` | `/api/v1/scripts/top-questions` | Топ вопросов | Все |
+| `GET` | `/api/v1/scripts/review` | Скрипты на ревью | Admin/Supervisor |
+| `GET` | `/api/v1/users` | Список пользователей | Admin |
+| `POST` | `/api/v1/users` | Создать пользователя | Admin |
+| `GET` | `/api/v1/regions` | Регионы | Все |
+| `GET` | `/api/v1/departments` | Отделы | Все |
+| `GET` | `/api/v1/call-types` | Типы звонков | Все |
+| `GET` | `/api/v1/call-resolutions` | Резолюции | Все |
+
+_* Операторы видят только свои звонки_
+
+</details>
+
+---
+
+## 🐛 Troubleshooting
+
+<details>
+<summary><b>Порт занят</b></summary>
+
+```bash
+# Остановить все контейнеры
+docker-compose down
+
+# Или найти процесс
+netstat -ano | findstr :8000
+```
+</details>
+
+<details>
+<summary><b>База данных не подключается</b></summary>
+
+```bash
+# Проверить статус
+docker-compose ps
+
+# Посмотреть логи
+docker-compose logs db
+docker-compose logs backend
+
+# Пересоздать контейнеры
+docker-compose down -v
+docker-compose up --build -d
+```
+</details>
+
+<details>
+<summary><b>Миграции не применяются</b></summary>
+
+```bash
+# Убедиться что БД запущена
+docker-compose ps
+
+# Применить миграции вручную
+docker-compose exec backend uv run alembic upgrade head
+
+# Проверить текущую версию
+docker-compose exec backend uv run alembic current
+```
+</details>
+
+---
 
 ## 📚 Документация
 
-- [Masterplan](docs/masterplan.md) - Общее видение проекта
-- [Tech Stack](docs/tech_stack.md) - Технологии и правила
-- [App Flow](docs/app_flow.md) - Роли и страницы
-- [Design Guidelines](docs/design_guidelines.md) - UI/UX правила
+- [Masterplan](docs/masterplan.md) — Видение проекта
+- [Tech Stack](docs/tech_stack.md) — Технологии и правила
+- [App Flow](docs/app_flow.md) — Роли и страницы
+- [Design Guidelines](docs/design_guidelines.md) — UI/UX гайдлайны
+- [DevOps Strategy](docs/devops_strategy.md) — CI/CD и деплой
 
-## 🔧 Troubleshooting
+---
 
-### Порт уже занят
+## 📈 Статус разработки
 
-Если порт 5432, 8000 или 5173 уже используется:
+- [x] ~~Phase 0: Инициализация~~
+- [x] ~~Phase 1: Backend & Database~~
+- [x] ~~Phase 2: Frontend Core~~
+- [x] ~~Phase 3: Search Integration~~
+- [x] ~~Phase 4: Dashboard & Analytics~~
+- [ ] Phase 5: Production Deploy
 
-```bash
-# Остановите существующие контейнеры
-make down
+---
 
-# Или измените порты в docker-compose.yml
-```
+<div align="center">
 
-### База данных не подключается
+**Made with ❤️ for PAYLINE Contact Center**
 
-```bash
-# Проверьте статус контейнеров
-docker-compose ps
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE)
 
-# Посмотрите логи
-docker-compose logs db
-docker-compose logs backend
-```
-
-### Миграции не применяются
-
-```bash
-# Убедитесь, что база данных запущена
-docker-compose ps
-
-# Проверьте подключение
-make db-shell
-
-# Пересоздайте контейнеры
-make down
-make dev
-```
-
-## 📝 Статус разработки
-
-- ✅ Phase 0: Инициализация
-- ✅ Phase 1: Backend & Database
-- 🔄 Phase 2: Frontend Core (в разработке)
-- ⏳ Phase 3: Search Integration
-- ⏳ Phase 4: Admin & Deploy
-
-## 📄 Лицензия
-
-MIT
+</div>
