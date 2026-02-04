@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from pydantic import BaseModel, ConfigDict
 
 from app.models.user import UserRole
@@ -20,12 +22,17 @@ class UserUpdate(BaseModel):
     password: str | None = None
     role: UserRole | None = None
     is_active: bool | None = None
+    role_override: UserRole | None = None
+    role_override_until: datetime | None = None
 
 
 class UserRead(UserBase):
     """User read schema."""
     id: int
     is_active: bool
+    role_override: UserRole | None = None
+    role_override_until: datetime | None = None
+    effective_role: UserRole
 
     model_config = ConfigDict(from_attributes=True)
 

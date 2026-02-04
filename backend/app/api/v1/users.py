@@ -18,7 +18,7 @@ async def require_admin(
     current_user: Annotated[User, Depends(get_current_user)],
 ) -> User:
     """Dependency to require admin role."""
-    if current_user.role != UserRole.ADMIN:
+    if not current_user.has_admin_rights():
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Admin privileges required",
@@ -117,6 +117,32 @@ async def update_user(
     
     if user_in.is_active is not None:
         user.is_active = user_in.is_active
+
+    role_override_provided = "role_override" in user_in.model_fields_set
+    role_override_until_provided = "role_override_until" in user_in.model_fields_set
+
+    if role_override_provided or role_override_until_provided:
+        if user_in.role_override is None:
+            if role_override_until_provided and user_in.role_override_until is not None:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="role_override is required when role_override_until is set",
+                )
+            user.role_override = None
+            user.role_override_until = None
+        else:
+            if user_in.role_override not in {UserRole.ADMIN, UserRole.SUPERVISOR}:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Temporary role must be admin or supervisor",
+                )
+            if user_in.role_override_until is None:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="role_override_until is required for temporary role",
+                )
+            user.role_override = user_in.role_override
+            user.role_override_until = user_in.role_override_until
     
     await db.commit()
     await db.refresh(user)

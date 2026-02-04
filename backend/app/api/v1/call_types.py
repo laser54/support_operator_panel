@@ -18,7 +18,7 @@ async def require_admin(
     current_user: Annotated[User, Depends(get_current_user)],
 ) -> User:
     """Dependency to require admin role."""
-    if current_user.role != UserRole.ADMIN:
+    if not current_user.has_admin_rights():
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Admin privileges required",

@@ -45,7 +45,23 @@ export default function AppLayout() {
     const navigate = useNavigate();
     const { data: currentUser } = useCurrentUser();
 
-    const isAdmin = currentUser?.role === 'admin';
+    const overrideUntil = currentUser?.role_override_until
+        ? new Date(currentUser.role_override_until)
+        : null;
+    const hasActiveOverride = !!(
+        currentUser?.role_override &&
+        overrideUntil &&
+        overrideUntil.getTime() > Date.now()
+    );
+    const effectiveRole = currentUser?.effective_role ?? currentUser?.role;
+    const isPrivileged = effectiveRole === 'admin' || effectiveRole === 'supervisor';
+    const roleLabel =
+        effectiveRole === 'admin'
+            ? 'Администратор'
+            : effectiveRole === 'supervisor'
+                ? 'Супервизор'
+                : 'Оператор';
+    const roleSuffix = hasActiveOverride ? ' (временно)' : '';
 
     const handleLogout = () => {
         localStorage.removeItem('token');
@@ -103,7 +119,7 @@ export default function AppLayout() {
                                 <LayoutDashboard className="h-4 w-4" />
                                 Дашборд
                             </NavLink>
-                            {isAdmin && (
+                            {isPrivileged && (
                                 <NavLink
                                     to="/users"
                                     className={({ isActive }) =>
@@ -117,7 +133,7 @@ export default function AppLayout() {
                                     Пользователи
                                 </NavLink>
                             )}
-                            {isAdmin && (
+                            {isPrivileged && (
                                 <NavLink
                                     to="/directories"
                                     className={({ isActive }) =>
@@ -145,7 +161,8 @@ export default function AppLayout() {
                                         {currentUser.username}
                                     </span>
                                     <span className="text-[10px] text-zinc-400 uppercase tracking-wider">
-                                        {currentUser.role === 'admin' ? 'Администратор' : 'Оператор'}
+                                        {roleLabel}
+                                        {roleSuffix}
                                     </span>
                                 </div>
                                 <Button

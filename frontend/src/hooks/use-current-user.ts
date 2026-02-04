@@ -4,8 +4,11 @@ import { api } from '@/api/client';
 export type CurrentUser = {
     id: number;
     username: string;
-    role: 'operator' | 'admin';
+    role: 'operator' | 'supervisor' | 'admin';
     is_active: boolean;
+    effective_role: 'operator' | 'supervisor' | 'admin';
+    role_override: 'operator' | 'supervisor' | 'admin' | null;
+    role_override_until: string | null;
 };
 
 export function useCurrentUser() {

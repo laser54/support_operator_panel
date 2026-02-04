@@ -21,7 +21,7 @@ USERS = [
     {
         "username": "supervisor",
         "password": "supervisor123",
-        "role": "admin",
+        "role": "supervisor",
         "is_active": True,
     },
     {
