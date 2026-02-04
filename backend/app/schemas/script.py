@@ -28,3 +28,10 @@ class ScriptUpdate(BaseModel):
     answer: str | None = None
     needs_review: bool | None = None
     in_registry_queue: bool | None = None
+
+
+class ScriptTopQuestion(BaseModel):
+    script_id: int
+    question: str
+    answer: str | None = None
+    total: int

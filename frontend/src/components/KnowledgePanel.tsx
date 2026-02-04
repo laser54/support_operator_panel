@@ -1,22 +1,41 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/api/client';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Search, Copy, Check, Sparkles, ArrowRight, BookOpen } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Search, Copy, Check, Sparkles, ArrowRight, BookOpen, ChevronDown, Flame } from 'lucide-react';
 import { toast } from 'sonner';
 
 import type { ScriptSelection } from '@/components/ScriptSelector';
 
 interface KnowledgePanelProps {
     onSelectScript?: (script: ScriptSelection) => void;
+    resetSignal?: number;
 }
 
-export function KnowledgePanel({ onSelectScript }: KnowledgePanelProps) {
+type TopRange = 'recent' | 'month' | 'year';
+
+const rangeLabels: Record<TopRange, string> = {
+    recent: 'Последнее',
+    month: 'Месяц',
+    year: 'Год',
+};
+
+const pluralizeMentions = (count: number) => {
+    const mod10 = count % 10;
+    const mod100 = count % 100;
+    if (mod10 === 1 && mod100 !== 11) return 'упоминание';
+    if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) return 'упоминания';
+    return 'упоминаний';
+};
+
+export function KnowledgePanel({ onSelectScript, resetSignal }: KnowledgePanelProps) {
     const [query, setQuery] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
     const [copiedId, setCopiedId] = useState<string | null>(null);
+    const [topRange, setTopRange] = useState<TopRange>('recent');
 
     const { data, isLoading, isError } = useQuery({
         queryKey: ['search', searchQuery],
@@ -28,10 +47,38 @@ export function KnowledgePanel({ onSelectScript }: KnowledgePanelProps) {
         enabled: searchQuery.length > 0,
     });
 
+    const {
+        data: topQuestions,
+        isLoading: isTopLoading,
+        isError: isTopError,
+    } = useQuery({
+        queryKey: ['top-questions', topRange],
+        queryFn: async () => {
+            const response = await api.get('/scripts/top-questions', {
+                params: { range: topRange, limit: 10 },
+            });
+            return response.data as Array<{
+                script_id: number;
+                question: string;
+                answer: string | null;
+                total: number;
+            }>;
+        },
+        enabled: searchQuery.length === 0,
+    });
+
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
         setSearchQuery(query);
     };
+
+    useEffect(() => {
+        if (typeof resetSignal === 'number') {
+            setQuery('');
+            setSearchQuery('');
+            setTopRange('recent');
+        }
+    }, [resetSignal]);
 
     const copyToClipboard = (text: string, id: string) => {
         navigator.clipboard.writeText(text);
@@ -51,6 +98,15 @@ export function KnowledgePanel({ onSelectScript }: KnowledgePanelProps) {
             });
             toast.success('Решение привязано к форме');
         }
+    };
+
+    const handleUseTopScript = (item: { script_id: number; question: string; answer: string | null }) => {
+        if (!item.answer) return;
+        handleUseSolution({
+            id: item.script_id,
+            question: item.question,
+            answer: item.answer,
+        });
     };
 
     return (
@@ -79,10 +135,23 @@ export function KnowledgePanel({ onSelectScript }: KnowledgePanelProps) {
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
                         <Input
                             placeholder="Введите вопрос клиента..."
-                            className="pl-10 h-11 bg-zinc-900/70 border border-zinc-800 text-white placeholder:text-zinc-500 focus-visible:ring-2 focus-visible:ring-zinc-500"
+                            className="pl-10 pr-10 h-11 bg-white border border-zinc-300 text-zinc-900 placeholder:text-zinc-400 focus-visible:ring-2 focus-visible:ring-zinc-400"
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}
                         />
+                        {query.trim().length > 0 && (
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setQuery('');
+                                    setSearchQuery('');
+                                }}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-700"
+                                aria-label="Очистить поиск"
+                            >
+                                ×
+                            </button>
+                        )}
                     </div>
                     <Button
                         type="submit"
@@ -125,14 +194,99 @@ export function KnowledgePanel({ onSelectScript }: KnowledgePanelProps) {
                 )}
 
                 {!isLoading && !data && !searchQuery && (
-                    <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-                        <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-violet-100 to-purple-100 dark:from-violet-500/10 dark:to-purple-500/10 flex items-center justify-center mb-4">
-                            <Sparkles className="w-10 h-10 text-violet-500/50" />
+                    <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-100 to-amber-100 flex items-center justify-center">
+                                    <Flame className="w-5 h-5 text-amber-600" />
+                                </div>
+                                <div>
+                                    <p className="text-sm font-semibold text-foreground">Частые вопросы</p>
+                                    <p className="text-xs text-muted-foreground">
+                                        Топ-10 по обращениям из реестра скриптов
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                                Нажмите, чтобы раскрыть ответ
+                            </div>
                         </div>
-                        <p className="font-medium text-foreground">AI-поиск по базе знаний</p>
-                        <p className="text-sm mt-1 text-center max-w-xs">
-                            Введите вопрос клиента, чтобы найти подходящий ответ
-                        </p>
+
+                        <Tabs value={topRange} onValueChange={(value) => setTopRange(value as TopRange)}>
+                            <TabsList className="h-9">
+                                {Object.entries(rangeLabels).map(([value, label]) => (
+                                    <TabsTrigger key={value} value={value} className="text-xs px-3 py-1.5">
+                                        {label}
+                                    </TabsTrigger>
+                                ))}
+                            </TabsList>
+                            <TabsContent value={topRange} className="mt-3">
+                                {isTopLoading && (
+                                    <div className="space-y-3">
+                                        <Skeleton className="h-14 w-full rounded-xl" />
+                                        <Skeleton className="h-14 w-full rounded-xl" />
+                                        <Skeleton className="h-14 w-full rounded-xl" />
+                                    </div>
+                                )}
+
+                                {isTopError && (
+                                    <div className="text-sm text-destructive py-6 text-center">
+                                        Не удалось загрузить топ вопросов
+                                    </div>
+                                )}
+
+                                {!isTopLoading && !isTopError && (topQuestions?.length ?? 0) === 0 && (
+                                    <div className="text-sm text-muted-foreground py-6 text-center">
+                                        Пока нет данных для этого периода
+                                    </div>
+                                )}
+
+                                {!isTopLoading && !isTopError && topQuestions && topQuestions.length > 0 && (
+                                    <div className="space-y-3">
+                                        {topQuestions.map((item, index) => (
+                                            <details
+                                                key={item.script_id}
+                                                className="group rounded-xl border border-border/60 bg-white/70 shadow-sm hover:border-amber-300 transition-colors"
+                                            >
+                                                <summary className="cursor-pointer list-none px-4 py-3 flex items-start justify-between gap-3">
+                                                    <div className="flex items-start gap-3">
+                                                        <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-700 text-xs font-bold">
+                                                            {index + 1}
+                                                        </span>
+                                                        <div className="text-sm text-foreground leading-snug">
+                                                            {item.question}
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                                                        <span>
+                                                            {item.total} {pluralizeMentions(item.total)}
+                                                        </span>
+                                                        <ChevronDown className="h-4 w-4 text-amber-500 transition-transform duration-200 group-open:rotate-180" />
+                                                    </div>
+                                                </summary>
+                                                {item.answer && (
+                                                    <div className="px-4 pb-4 space-y-3">
+                                                        <div className="text-sm text-foreground/90 leading-relaxed">
+                                                            {item.answer}
+                                                        </div>
+                                                        {onSelectScript && (
+                                                            <Button
+                                                                variant="default"
+                                                                size="sm"
+                                                                className="h-8 bg-primary hover:bg-primary/90 text-primary-foreground"
+                                                                onClick={() => handleUseTopScript(item)}
+                                                            >
+                                                                Использовать ответ
+                                                            </Button>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </details>
+                                        ))}
+                                    </div>
+                                )}
+                            </TabsContent>
+                        </Tabs>
                     </div>
                 )}
 

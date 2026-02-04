@@ -55,9 +55,10 @@ function formatDuration(seconds: number): string {
 interface OperatorFormProps {
     externalSelectedScript?: ScriptSelection | null;
     onClearExternalScript?: () => void;
+    onCallSaved?: () => void;
 }
 
-export function OperatorForm({ externalSelectedScript, onClearExternalScript }: OperatorFormProps) {
+export function OperatorForm({ externalSelectedScript, onClearExternalScript, onCallSaved }: OperatorFormProps) {
     const [isTimerRunning, setIsTimerRunning] = useState(false);
     const [elapsedSeconds, setElapsedSeconds] = useState(0);
     const [isTimerStopped, setIsTimerStopped] = useState(false);
@@ -287,6 +288,7 @@ export function OperatorForm({ externalSelectedScript, onClearExternalScript }: 
             setPreviewData(null);
             startTimeRef.current = null;
             if (onClearExternalScript) onClearExternalScript();
+            if (onCallSaved) onCallSaved();
         },
         onError: () => {
             toast.error('Ошибка сохранения');
