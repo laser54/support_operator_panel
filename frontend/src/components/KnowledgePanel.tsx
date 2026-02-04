@@ -56,10 +56,10 @@ export function KnowledgePanel({ onSelectScript }: KnowledgePanelProps) {
     return (
         <div className="h-full flex flex-col">
             {/* Header */}
-            <div className="shrink-0 px-6 py-4 border-b border-border/50 bg-background">
-                <div className="flex items-center gap-3 mb-4">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500/20 to-purple-500/20 flex items-center justify-center">
-                        <BookOpen className="w-5 h-5 text-violet-500" />
+            <div className="shrink-0 px-5 h-16 border-b border-white/10 bg-zinc-950 text-white flex items-center">
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
+                        <BookOpen className="w-5 h-5 text-primary" />
                     </div>
                     <div>
                         <h2 className="text-lg font-semibold tracking-tight flex items-center gap-2">
@@ -69,17 +69,17 @@ export function KnowledgePanel({ onSelectScript }: KnowledgePanelProps) {
                                 AI
                             </span>
                         </h2>
-                        <p className="text-xs text-muted-foreground">Найдите ответ на вопрос клиента</p>
+                        <p className="text-xs text-zinc-400">Найдите ответ на вопрос клиента</p>
                     </div>
                 </div>
 
                 {/* Search Form */}
-                <form onSubmit={handleSearch} className="flex gap-2">
+                <form onSubmit={handleSearch} className="ml-auto flex gap-2">
                     <div className="relative flex-1">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
                         <Input
                             placeholder="Введите вопрос клиента..."
-                            className="pl-10 h-11 bg-muted/50 border-0 focus-visible:ring-2 focus-visible:ring-zinc-400"
+                            className="pl-10 h-11 bg-zinc-900/70 border border-zinc-800 text-white placeholder:text-zinc-500 focus-visible:ring-2 focus-visible:ring-zinc-500"
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}
                         />
@@ -87,7 +87,7 @@ export function KnowledgePanel({ onSelectScript }: KnowledgePanelProps) {
                     <Button
                         type="submit"
                         disabled={isLoading || !query.trim()}
-                        className="h-11 px-6 bg-zinc-900 hover:bg-zinc-800 text-white"
+                        className="h-11 px-6 bg-primary hover:bg-primary/90 text-primary-foreground"
                     >
                         {isLoading ? (
                             <span className="flex items-center gap-2">

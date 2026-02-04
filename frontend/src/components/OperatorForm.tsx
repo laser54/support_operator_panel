@@ -519,7 +519,7 @@ export function OperatorForm({ externalSelectedScript, onClearExternalScript }: 
                         </div>
 
                         {/* Row 2: Name / Phone / Gender */}
-                        <div className="grid grid-cols-3 gap-3">
+                        <div className="grid grid-cols-3 gap-3 items-end">
                             <FormField
                                 control={form.control}
                                 name="applicant_name"
