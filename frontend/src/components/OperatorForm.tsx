@@ -396,16 +396,16 @@ export const OperatorForm = forwardRef<OperatorFormRef, OperatorFormProps>(funct
 
     return (
         <div className="h-full flex flex-col bg-white">
-            {/* Header with Timer - FIXED */}
-            <div className="shrink-0 px-5 py-3 border-b border-border/50 bg-zinc-950 text-white">
-                <div className="flex items-center justify-between">
+            {/* Header with Timer */}
+            <div className="shrink-0 h-16 px-5 border-b border-white/10 bg-zinc-950 text-white flex items-center">
+                <div className="flex items-center justify-between w-full">
                     <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-lg bg-primary/20 flex items-center justify-center">
-                            <Phone className="w-4 h-4 text-primary" />
+                        <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
+                            <Phone className="w-5 h-5 text-primary" />
                         </div>
                         <div>
                             <h1 className="text-base font-semibold tracking-tight">Новый звонок</h1>
-                            <p className="text-[10px] text-zinc-400">Заполните данные</p>
+                            <p className="text-[11px] text-zinc-500">Заполните данные</p>
                         </div>
                     </div>
 

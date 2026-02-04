@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/api/client';
-import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -128,36 +128,43 @@ export const KnowledgePanel = forwardRef<KnowledgePanelRef, KnowledgePanelProps>
 
     return (
         <div className="h-full flex flex-col">
-            {/* Header */}
-            <div className="shrink-0 px-5 py-3 border-b border-white/10 bg-zinc-950 text-white">
-                <div className="flex items-center gap-4">
-                    {/* Title */}
-                    <div className="flex items-center gap-3 shrink-0">
-                        <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
-                            <BookOpen className="w-5 h-5 text-primary" />
-                        </div>
-                        <div>
-                            <h2 className="text-base font-semibold tracking-tight flex items-center gap-2">
-                                База знаний
-                                <span className="text-[10px] uppercase bg-gradient-to-r from-violet-500 to-purple-500 text-white px-2 py-0.5 rounded-full font-bold flex items-center gap-1">
-                                    <Sparkles className="w-3 h-3" />
-                                    AI
-                                </span>
-                            </h2>
-                        </div>
+            {/* Header - matching left panel */}
+            <div className="shrink-0 h-16 px-5 border-b border-white/10 bg-zinc-950 text-white flex items-center">
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-violet-500/20 flex items-center justify-center">
+                        <BookOpen className="w-5 h-5 text-violet-400" />
                     </div>
+                    <div>
+                        <div className="flex items-center gap-2">
+                            <h2 className="text-base font-semibold">База знаний</h2>
+                            <span className="text-[9px] uppercase bg-gradient-to-r from-violet-500 to-purple-500 text-white px-1.5 py-0.5 rounded-full font-bold flex items-center gap-0.5">
+                                <Sparkles className="w-2.5 h-2.5" />
+                                AI
+                            </span>
+                        </div>
+                        <p className="text-[11px] text-zinc-500">Семантический поиск по скриптам</p>
+                    </div>
+                </div>
+            </div>
 
-                    {/* Search Form */}
-                    <form onSubmit={handleSearch} className="flex-1 flex gap-2 min-w-0">
-                        <div className="relative flex-1 min-w-0">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
-                            <Input
-                                ref={searchInputRef}
-                                placeholder="Введите во"
-                                className="pl-10 pr-10 h-10 w-full bg-white border border-zinc-300 text-zinc-900 placeholder:text-zinc-400 focus-visible:ring-2 focus-visible:ring-zinc-400"
-                                value={query}
-                                onChange={(e) => setQuery(e.target.value)}
-                            />
+            {/* Search Form */}
+            <div className="shrink-0 p-4 border-b border-border/50 bg-muted/30">
+                <form onSubmit={handleSearch}>
+                    <div className="relative">
+                        <Textarea
+                            ref={searchInputRef as React.RefObject<HTMLTextAreaElement>}
+                            placeholder="Опишите вопрос клиента..."
+                            className="min-h-[72px] max-h-[120px] pr-28 resize-none text-sm leading-relaxed"
+                            value={query}
+                            onChange={(e) => setQuery(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' && !e.shiftKey) {
+                                    e.preventDefault();
+                                    handleSearch(e);
+                                }
+                            }}
+                        />
+                        <div className="absolute right-2 bottom-2 flex items-center gap-1.5">
                             {query.trim().length > 0 && (
                                 <button
                                     type="button"
@@ -165,29 +172,33 @@ export const KnowledgePanel = forwardRef<KnowledgePanelRef, KnowledgePanelProps>
                                         setQuery('');
                                         setSearchQuery('');
                                     }}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-700"
-                                    aria-label="Очистить поиск"
+                                    className="h-8 w-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                                    aria-label="Очистить"
                                 >
                                     ×
                                 </button>
                             )}
+                            <Button
+                                type="submit"
+                                disabled={isLoading || !query.trim()}
+                                size="sm"
+                                className="h-9 px-4"
+                            >
+                                {isLoading ? (
+                                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                ) : (
+                                    <span className="flex items-center gap-1.5">
+                                        <Search className="w-3.5 h-3.5" />
+                                        Найти
+                                    </span>
+                                )}
+                            </Button>
                         </div>
-                        <Button
-                            type="submit"
-                            disabled={isLoading || !query.trim()}
-                            className="h-10 px-5 shrink-0 bg-primary hover:bg-primary/90 text-primary-foreground"
-                        >
-                            {isLoading ? (
-                                <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                            ) : (
-                                <span className="flex items-center gap-2">
-                                    Найти
-                                    <ArrowRight className="w-4 h-4" />
-                                </span>
-                            )}
-                        </Button>
-                    </form>
-                </div>
+                    </div>
+                    <p className="text-[11px] text-muted-foreground mt-2">
+                        Enter — поиск · Shift+Enter — новая строка · Ctrl+S — фокус
+                    </p>
+                </form>
             </div>
 
             {/* Results */}
