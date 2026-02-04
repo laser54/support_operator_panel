@@ -9,6 +9,7 @@ import HistoryPage from '@/pages/HistoryPage';
 import DashboardPage from '@/pages/DashboardPage';
 import UsersPage from '@/pages/UsersPage';
 import DirectoriesPage from '@/pages/DirectoriesPage';
+import ScriptsReviewPage from '@/pages/ScriptsReviewPage';
 
 function ProtectedRoute({ children }: { children: JSX.Element }) {
   const token = localStorage.getItem('token');
@@ -37,6 +38,7 @@ function App() {
             <Route path="dashboard" element={<DashboardPage />} />
             <Route path="users" element={<UsersPage />} />
             <Route path="directories" element={<DirectoriesPage />} />
+            <Route path="scripts-review" element={<ScriptsReviewPage />} />
           </Route>
         </Routes>
       </BrowserRouter>

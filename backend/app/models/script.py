@@ -20,6 +20,7 @@ class Script(Base):
     # Custom / Review workflow
     is_custom = Column(Boolean, default=False, nullable=False)
     needs_review = Column(Boolean, default=False, nullable=False)
+    in_registry_queue = Column(Boolean, default=False, nullable=False)
     
     # Metadata
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)

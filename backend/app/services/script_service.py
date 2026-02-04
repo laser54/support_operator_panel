@@ -35,7 +35,8 @@ class ScriptService:
                 question=script_in.question,
                 answer=script_in.answer,
                 is_custom=False,
-                needs_review=False # External usually trusted? Or maybe flags if content changed? For now False.
+                needs_review=False, # External usually trusted? Or maybe flags if content changed? For now False.
+                in_registry_queue=False
             )
             db.add(new_script)
             await db.commit()
@@ -51,7 +52,8 @@ class ScriptService:
                 question=script_in.question,
                 answer=script_in.answer,
                 is_custom=True,
-                needs_review=script_in.needs_review
+                needs_review=script_in.needs_review,
+                in_registry_queue=script_in.in_registry_queue
             )
             db.add(new_script)
             await db.commit()

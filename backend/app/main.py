@@ -1,15 +1,16 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.v1 import auth, regions, departments, calls, search, users, call_types, call_resolutions
+from app.api.v1 import auth, regions, departments, calls, search, users, call_types, call_resolutions, scripts
 from app.core.config import settings
 
 app = FastAPI(title="Support Operator Panel API", version="1.0.0")
 
 # CORS middleware
+print(f"CORS origins: {settings.cors_origins}")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[settings.FRONTEND_URL],
+    allow_origins=settings.cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -24,6 +25,7 @@ app.include_router(call_resolutions.router, prefix="/api/v1")
 app.include_router(calls.router, prefix="/api/v1")
 app.include_router(search.router, prefix="/api/v1")
 app.include_router(users.router, prefix="/api/v1")
+app.include_router(scripts.router, prefix="/api/v1")
 
 
 @app.get("/")

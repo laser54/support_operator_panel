@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.v1.auth import get_current_user
 from app.db.session import get_db
 from app.models.call import Call
-from app.models.user import User, UserRole
+from app.models.user import User
 from app.schemas.call import CallCreate, CallRead
 from app.services.script_service import script_service
 
@@ -51,7 +51,7 @@ async def list_calls(
     """List calls for the current operator (or all for admin)."""
     query = select(Call).options(selectinload(Call.script))
 
-    if current_user.role != UserRole.ADMIN:
+    if not current_user.has_admin_rights():
         query = query.where(Call.operator_id == current_user.id)
 
     query = query.order_by(desc(Call.created_at)).offset(skip).limit(limit)

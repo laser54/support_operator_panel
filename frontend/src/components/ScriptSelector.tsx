@@ -30,7 +30,7 @@ export function ScriptSelector({
     selectedScript: externalSelection,
     notes = ''
 }: ScriptSelectorProps) {
-    const [mode, setMode] = useState<SolutionMode>('none');
+    const [mode, setMode] = useState<SolutionMode>('propose_qa');
     const [localNotes, setLocalNotes] = useState(notes);
 
     // Custom Q&A fields
@@ -97,7 +97,7 @@ export function ScriptSelector({
                         <div className="flex items-center gap-2">
                             <Check className="h-5 w-5 text-green-600" />
                             <CardTitle className="text-sm text-green-800">
-                                {externalSelection.is_custom ? 'Custom Script Attached' : 'Knowledge Base Script Linked'}
+                                {externalSelection.is_custom ? 'Кастомный скрипт прикреплён' : 'Скрипт из базы знаний привязан'}
                             </CardTitle>
                         </div>
                         <Button
@@ -107,7 +107,7 @@ export function ScriptSelector({
                             className="text-green-700 hover:text-red-600 hover:bg-red-50 h-8"
                         >
                             <X className="h-4 w-4 mr-1" />
-                            Remove
+                            Убрать
                         </Button>
                     </div>
                 </CardHeader>
@@ -117,19 +117,19 @@ export function ScriptSelector({
                         {externalSelection.answer ? (
                             <p className="text-sm text-green-700 line-clamp-3">A: {externalSelection.answer}</p>
                         ) : (
-                            <p className="text-sm text-amber-600 italic">Answer pending (marked for review)</p>
+                            <p className="text-sm text-amber-600 italic">Ответ ожидается (на ревью)</p>
                         )}
                     </div>
                     {externalSelection.needs_review && (
                         <div className="mt-2 flex items-center gap-1 text-xs text-amber-600">
                             <FileQuestion className="h-3 w-3" />
-                            Marked for supervisor review
+                            Отправлено на ревью
                         </div>
                     )}
 
                     {/* Notes section always available */}
                     <div className="mt-4 pt-3 border-t border-green-200">
-                        <Label className="text-xs text-green-700 mb-1 block">Additional Notes (optional)</Label>
+                        <Label className="text-xs text-green-700 mb-1 block">Доп. заметки (опционально)</Label>
                         <Textarea
                             value={localNotes}
                             onChange={(e) => handleNotesChange(e.target.value)}
@@ -147,10 +147,10 @@ export function ScriptSelector({
             <CardHeader className="pb-3">
                 <CardTitle className="text-sm flex items-center gap-2">
                     <MessageSquare className="h-4 w-4" />
-                    Solution & Notes
+                    Решение и заметки
                 </CardTitle>
                 <CardDescription className="text-xs">
-                    Link a Knowledge Base answer from the right panel, add notes, or propose a new Q&A
+                    Выберите ответ из базы знаний, добавьте заметки или предложите новый Q&A
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -164,7 +164,7 @@ export function ScriptSelector({
                         className="flex-1 text-xs h-9"
                     >
                         <MessageSquare className="h-3.5 w-3.5 mr-1.5" />
-                        Add Notes
+                        Заметки
                     </Button>
                     <Button
                         type="button"
@@ -174,22 +174,22 @@ export function ScriptSelector({
                         className="flex-1 text-xs h-9"
                     >
                         <Lightbulb className="h-3.5 w-3.5 mr-1.5" />
-                        Propose Q&A
+                        Предложить Q&A
                     </Button>
                 </div>
 
                 {/* Notes mode */}
                 {mode === 'notes_only' && (
                     <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-200">
-                        <Label className="text-xs">Operator Notes</Label>
+                        <Label className="text-xs">Заметки оператора</Label>
                         <Textarea
                             value={localNotes}
                             onChange={(e) => handleNotesChange(e.target.value)}
-                            placeholder="Describe how the issue was resolved, any special circumstances, etc..."
+                            placeholder="Опишите, как была решена проблема, детали и нюансы..."
                             className="h-28"
                         />
                         <p className="text-xs text-muted-foreground">
-                            Notes are saved with the call but not added to the Knowledge Base.
+                            Заметки сохраняются в звонке, но не попадают в базу знаний.
                         </p>
                     </div>
                 )}
@@ -198,20 +198,20 @@ export function ScriptSelector({
                 {mode === 'propose_qa' && (
                     <div className="space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
                         <div className="space-y-1.5">
-                            <Label className="text-xs">Question / Issue *</Label>
+                            <Label className="text-xs">Вопрос / проблема *</Label>
                             <Input
                                 value={customQuestion}
                                 onChange={(e) => setCustomQuestion(e.target.value)}
-                                placeholder="What was the customer's question?"
+                                placeholder="В чём был вопрос клиента?"
                                 className="text-sm"
                             />
                         </div>
                         <div className="space-y-1.5">
-                            <Label className="text-xs">Answer / Solution</Label>
+                            <Label className="text-xs">Ответ / решение</Label>
                             <Textarea
                                 value={customAnswer}
                                 onChange={(e) => setCustomAnswer(e.target.value)}
-                                placeholder="How was it resolved? (optional - can be added by supervisor)"
+                                placeholder="Как решили? (можно оставить пустым — добавит супервизор)"
                                 className="h-20 text-sm"
                             />
                         </div>
@@ -222,7 +222,7 @@ export function ScriptSelector({
                                 onCheckedChange={(c) => setNeedsReview(c as boolean)}
                             />
                             <Label htmlFor="needs-review" className="text-xs cursor-pointer">
-                                Send for Supervisor Review (добавить в каталог скриптов)
+                                Отправить на ревью (добавить в очередь реестра скриптов)
                             </Label>
                         </div>
                         <Button
@@ -241,7 +241,7 @@ export function ScriptSelector({
                 {/* Waiting for KB selection hint */}
                 {mode === 'none' && (
                     <div className="text-center py-4 text-sm text-muted-foreground bg-slate-50 rounded-lg border border-dashed">
-                        <p>Search the Knowledge Base on the right panel</p>
+                        <p>Ищите в базе знаний в правой панели</p>
                         <p className="text-xs mt-1">or choose an option above</p>
                     </div>
                 )}

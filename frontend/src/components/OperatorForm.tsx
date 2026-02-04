@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import {
@@ -23,7 +24,7 @@ import {
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/api/client';
 import { toast } from 'sonner';
-import { Play, Square, RotateCcw, Save, User, Phone, MapPin, Building2, MessageSquare, Clock, StickyNote, Tag, CheckCircle2 } from 'lucide-react';
+import { Play, Square, RotateCcw, Save, User, Phone, MapPin, Building2, MessageSquare, Clock, StickyNote, Tag, CheckCircle2, FileQuestion } from 'lucide-react';
 import type { ScriptSelection } from '@/components/ScriptSelector';
 import { SaveCallConfirmDialog, type CallPreviewData } from '@/components/SaveCallConfirmDialog';
 
@@ -64,6 +65,8 @@ export function OperatorForm({ externalSelectedScript, onClearExternalScript }: 
     const startTimeRef = useRef<number | null>(null);
     const [scriptData, setScriptData] = useState<ScriptSelection | null>(null);
     const [operatorNotes, setOperatorNotes] = useState('');
+    const [reviewEnabled, setReviewEnabled] = useState(false);
+    const [reviewAnswer, setReviewAnswer] = useState('');
     const [showConfirmDialog, setShowConfirmDialog] = useState(false);
     const [previewData, setPreviewData] = useState<CallPreviewData | null>(null);
 
@@ -119,6 +122,41 @@ export function OperatorForm({ externalSelectedScript, onClearExternalScript }: 
     const phoneNumber = form.watch('phone_number');
     const description = form.watch('description');
 
+    useEffect(() => {
+        if (reviewEnabled && externalSelectedScript && onClearExternalScript) {
+            onClearExternalScript();
+        }
+
+        setScriptData((prev) => {
+            if (reviewEnabled) {
+                if (description.trim().length === 0) {
+                    return null;
+                }
+                const next = {
+                    question: description,
+                    answer: reviewAnswer.length > 0 ? reviewAnswer : null,
+                    is_custom: true,
+                    needs_review: true,
+                };
+                if (
+                    prev &&
+                    prev.is_custom &&
+                    prev.needs_review &&
+                    prev.question === next.question &&
+                    prev.answer === next.answer
+                ) {
+                    return prev;
+                }
+                return next;
+            }
+
+            if (prev?.is_custom && prev.needs_review) {
+                return null;
+            }
+            return prev;
+        });
+    }, [reviewEnabled, reviewAnswer, description, externalSelectedScript, onClearExternalScript]);
+
     const filteredDepartments = useMemo(() => {
         if (!departments) return [];
         if (!selectedRegionId) return departments;
@@ -140,11 +178,12 @@ export function OperatorForm({ externalSelectedScript, onClearExternalScript }: 
     }, [departments, form, selectedRegionId]);
 
     useEffect(() => {
+        if (reviewEnabled) return;
         if (externalSelectedScript) {
             setScriptData(externalSelectedScript);
             form.setValue('description', externalSelectedScript.question || '');
         }
-    }, [externalSelectedScript, form]);
+    }, [externalSelectedScript, form, reviewEnabled]);
 
     useEffect(() => {
         if (isTimerRunning || isTimerStopped) return;
@@ -581,13 +620,49 @@ export function OperatorForm({ externalSelectedScript, onClearExternalScript }: 
                             )}
                         />
 
+                        {/* Review toggle */}
+                        <div className="rounded-lg border border-amber-200 bg-amber-50/70 p-2.5">
+                            <div className="flex items-center justify-between gap-3">
+                                <label className="text-xs font-medium text-amber-700 flex items-center gap-2">
+                                    <FileQuestion className="w-3 h-3" />
+                                    Отправить вопрос на ревью
+                                </label>
+                                <Checkbox
+                                    checked={reviewEnabled}
+                                    onCheckedChange={(value) => setReviewEnabled(!!value)}
+                                />
+                            </div>
+                            <p className="text-[10px] text-amber-700/80 mt-1">
+                                В реестр пойдёт текст из поля «Вопрос / Описание».
+                            </p>
+                            {reviewEnabled && (
+                                <div className="mt-2">
+                                    <label className="text-[10px] font-medium text-amber-700 mb-1 block">
+                                        Черновик ответа (опционально)
+                                    </label>
+                                    <Textarea
+                                        placeholder="Можно оставить пустым — супервизор добавит"
+                                        className="h-16 resize-none text-xs bg-white/70"
+                                        value={reviewAnswer}
+                                        onChange={(e) => setReviewAnswer(e.target.value)}
+                                    />
+                                </div>
+                            )}
+                        </div>
+
                         {/* Selected Script Preview */}
                         {scriptData && (
                             <div className="p-2.5 rounded-lg bg-emerald-50 border border-emerald-200">
                                 <div className="flex items-start justify-between gap-2">
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-[10px] font-medium text-emerald-700 mb-0.5 uppercase tracking-wide">Решение</p>
-                                        <p className="text-xs text-foreground line-clamp-2">{scriptData.answer}</p>
+                                        <p className="text-[10px] font-medium text-emerald-700 mb-0.5 uppercase tracking-wide">
+                                            {scriptData.is_custom ? 'На ревью' : 'Решение'}
+                                        </p>
+                                        <p className="text-xs text-foreground line-clamp-2">
+                                            {scriptData.is_custom
+                                                ? scriptData.question
+                                                : scriptData.answer}
+                                        </p>
                                     </div>
                                     <Button
                                         type="button"
@@ -596,6 +671,10 @@ export function OperatorForm({ externalSelectedScript, onClearExternalScript }: 
                                         onClick={() => {
                                             setScriptData(null);
                                             if (onClearExternalScript) onClearExternalScript();
+                                            if (scriptData.is_custom) {
+                                                setReviewEnabled(false);
+                                                setReviewAnswer('');
+                                            }
                                         }}
                                         className="shrink-0 h-5 w-5 p-0 text-xs"
                                     >

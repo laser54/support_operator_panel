@@ -33,7 +33,15 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
 
     # CORS
-    FRONTEND_URL: str = "http://localhost:5173"
+    FRONTEND_URL: str | None = None
+    FRONTEND_URLS: list[str] = ["http://localhost:5173", "http://localhost:3001"]
+
+    @property
+    def cors_origins(self) -> list[str]:
+        origins = list(self.FRONTEND_URLS)
+        if self.FRONTEND_URL and self.FRONTEND_URL not in origins:
+            origins.append(self.FRONTEND_URL)
+        return origins
 
     # External Services
     KNOWLEDGE_BASE_URL: str = "https://qa.larin.work"
