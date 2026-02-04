@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.v1 import auth, regions, departments, calls, search, users
+from app.api.v1 import auth, regions, departments, calls, search, users, call_types, call_resolutions
 from app.core.config import settings
 
 app = FastAPI(title="Support Operator Panel API", version="1.0.0")
@@ -19,6 +19,8 @@ app.add_middleware(
 app.include_router(auth.router, prefix="/api/v1")
 app.include_router(regions.router, prefix="/api/v1")
 app.include_router(departments.router, prefix="/api/v1")
+app.include_router(call_types.router, prefix="/api/v1")
+app.include_router(call_resolutions.router, prefix="/api/v1")
 app.include_router(calls.router, prefix="/api/v1")
 app.include_router(search.router, prefix="/api/v1")
 app.include_router(users.router, prefix="/api/v1")

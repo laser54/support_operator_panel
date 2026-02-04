@@ -33,9 +33,11 @@ from app.models.user import User, UserRole
 from app.models.region import Region
 from app.models.department import Department
 from app.models.script import Script
+from app.models.call_type import CallType
+from app.models.call_resolution import CallResolution
 
 # Import fixtures
-from fixtures.data import USERS, REGIONS, DEPARTMENTS, SCRIPTS
+from fixtures.data import USERS, REGIONS, DEPARTMENTS, SCRIPTS, CALL_TYPES, CALL_RESOLUTIONS
 
 
 class FixtureLoader:
@@ -48,6 +50,8 @@ class FixtureLoader:
             "regions": 0,
             "departments": 0,
             "scripts": 0,
+            "call_types": 0,
+            "call_resolutions": 0,
         }
 
     async def load_all(self):
@@ -66,6 +70,8 @@ class FixtureLoader:
             await self._load_regions(session)
             await self._load_departments(session)
             await self._load_scripts(session)
+            await self._load_call_types(session)
+            await self._load_call_resolutions(session)
 
             await session.commit()
 
@@ -79,6 +85,8 @@ class FixtureLoader:
         # Сначала удаляем calls (ссылается на users, regions, departments, scripts)
         await session.execute(text("DELETE FROM calls"))
         await session.execute(delete(Script))
+        await session.execute(delete(CallResolution))
+        await session.execute(delete(CallType))
         await session.execute(delete(Department))
         await session.execute(delete(Region))
         await session.execute(delete(User))
@@ -206,6 +214,46 @@ class FixtureLoader:
 
         await session.flush()
 
+    async def _load_call_types(self, session):
+        """Загрузить типы звонков."""
+        print("\n📞 Загрузка типов звонков...")
+
+        for call_type_data in CALL_TYPES:
+            result = await session.execute(
+                select(CallType).where(CallType.name == call_type_data["name"])
+            )
+            existing = result.scalar_one_or_none()
+            if existing:
+                print(f"   ⏭️  Тип звонка уже существует: {call_type_data['name']}")
+                continue
+
+            call_type = CallType(name=call_type_data["name"])
+            session.add(call_type)
+            self.stats["call_types"] += 1
+            print(f"   ✓ {call_type_data['name']}")
+
+        await session.flush()
+
+    async def _load_call_resolutions(self, session):
+        """Загрузить решения (исходы звонка)."""
+        print("\n✅ Загрузка решений по звонкам...")
+
+        for resolution_data in CALL_RESOLUTIONS:
+            result = await session.execute(
+                select(CallResolution).where(CallResolution.name == resolution_data["name"])
+            )
+            existing = result.scalar_one_or_none()
+            if existing:
+                print(f"   ⏭️  Решение уже существует: {resolution_data['name']}")
+                continue
+
+            resolution = CallResolution(name=resolution_data["name"])
+            session.add(resolution)
+            self.stats["call_resolutions"] += 1
+            print(f"   ✓ {resolution_data['name']}")
+
+        await session.flush()
+
     def _print_summary(self):
         """Вывести итоговую статистику."""
         print("\n" + "=" * 60)
@@ -215,6 +263,8 @@ class FixtureLoader:
         print(f"   🏙️  Регионов:        {self.stats['regions']}")
         print(f"   🏢 Департаментов:   {self.stats['departments']}")
         print(f"   📝 Скриптов:        {self.stats['scripts']}")
+        print(f"   📞 Типов звонков:   {self.stats['call_types']}")
+        print(f"   ✅ Решений:         {self.stats['call_resolutions']}")
         print()
         print("🔑 Тестовые учётные данные:")
         print("   admin / admin (админ)")

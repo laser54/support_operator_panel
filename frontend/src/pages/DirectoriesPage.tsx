@@ -17,6 +17,8 @@ import {
     BookOpen,
     Save,
     X,
+    PhoneCall,
+    CheckCircle2,
 } from 'lucide-react';
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -70,6 +72,16 @@ type Department = {
     region_id: number;
 };
 
+type CallType = {
+    id: number;
+    name: string;
+};
+
+type CallResolution = {
+    id: number;
+    name: string;
+};
+
 // Schemas
 const regionSchema = z.object({
     name: z.string().min(2, 'Минимум 2 символа').max(100, 'Максимум 100 символов'),
@@ -81,8 +93,18 @@ const departmentSchema = z.object({
     region_id: z.string().min(1, 'Выберите регион'),
 });
 
+const callTypeSchema = z.object({
+    name: z.string().min(2, 'Минимум 2 символа').max(100, 'Максимум 100 символов'),
+});
+
+const callResolutionSchema = z.object({
+    name: z.string().min(2, 'Минимум 2 символа').max(100, 'Максимум 100 символов'),
+});
+
 type RegionForm = z.infer<typeof regionSchema>;
 type DepartmentForm = z.infer<typeof departmentSchema>;
+type CallTypeForm = z.infer<typeof callTypeSchema>;
+type CallResolutionForm = z.infer<typeof callResolutionSchema>;
 
 // Region row component with expandable departments
 function RegionRow({
@@ -229,7 +251,19 @@ export default function DirectoriesPage() {
         open: false,
         mode: 'create',
     });
-    const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; type: 'region' | 'department'; item?: Region | Department }>({
+    const [callTypeDialog, setCallTypeDialog] = useState<{ open: boolean; mode: 'create' | 'edit'; callType?: CallType }>({
+        open: false,
+        mode: 'create',
+    });
+    const [resolutionDialog, setResolutionDialog] = useState<{ open: boolean; mode: 'create' | 'edit'; resolution?: CallResolution }>({
+        open: false,
+        mode: 'create',
+    });
+    const [deleteDialog, setDeleteDialog] = useState<{
+        open: boolean;
+        type: 'region' | 'department' | 'call_type' | 'resolution';
+        item?: Region | Department | CallType | CallResolution;
+    }>({
         open: false,
         type: 'region',
     });
@@ -245,6 +279,16 @@ export default function DirectoriesPage() {
         defaultValues: { name: '', region_id: '' },
     });
 
+    const callTypeForm = useForm<CallTypeForm>({
+        resolver: zodResolver(callTypeSchema),
+        defaultValues: { name: '' },
+    });
+
+    const resolutionForm = useForm<CallResolutionForm>({
+        resolver: zodResolver(callResolutionSchema),
+        defaultValues: { name: '' },
+    });
+
     // Queries
     const { data: regions = [], isLoading: regionsLoading } = useQuery<Region[]>({
         queryKey: ['regions'],
@@ -258,6 +302,22 @@ export default function DirectoriesPage() {
         queryKey: ['departments'],
         queryFn: async () => {
             const response = await api.get('/departments/');
+            return response.data;
+        },
+    });
+
+    const { data: callTypes = [], isLoading: callTypesLoading } = useQuery<CallType[]>({
+        queryKey: ['call-types'],
+        queryFn: async () => {
+            const response = await api.get('/call-types/');
+            return response.data;
+        },
+    });
+
+    const { data: callResolutions = [], isLoading: resolutionsLoading } = useQuery<CallResolution[]>({
+        queryKey: ['call-resolutions'],
+        queryFn: async () => {
+            const response = await api.get('/call-resolutions/');
             return response.data;
         },
     });
@@ -359,6 +419,100 @@ export default function DirectoriesPage() {
         },
     });
 
+    // Mutations - Call Types
+    const createCallTypeMutation = useMutation({
+        mutationFn: async (data: CallTypeForm) => {
+            const response = await api.post('/call-types/', data);
+            return response.data;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['call-types'] });
+            toast.success('Тип звонка создан');
+            setCallTypeDialog({ open: false, mode: 'create' });
+            callTypeForm.reset();
+        },
+        onError: (err: any) => {
+            toast.error(err.response?.data?.detail || 'Ошибка создания типа звонка');
+        },
+    });
+
+    const updateCallTypeMutation = useMutation({
+        mutationFn: async ({ id, data }: { id: number; data: Partial<CallTypeForm> }) => {
+            const response = await api.patch(`/call-types/${id}`, data);
+            return response.data;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['call-types'] });
+            toast.success('Тип звонка обновлён');
+            setCallTypeDialog({ open: false, mode: 'create' });
+            callTypeForm.reset();
+        },
+        onError: (err: any) => {
+            toast.error(err.response?.data?.detail || 'Ошибка обновления типа звонка');
+        },
+    });
+
+    const deleteCallTypeMutation = useMutation({
+        mutationFn: async (id: number) => {
+            await api.delete(`/call-types/${id}`);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['call-types'] });
+            toast.success('Тип звонка удалён');
+            setDeleteDialog({ open: false, type: 'call_type' });
+        },
+        onError: (err: any) => {
+            toast.error(err.response?.data?.detail || 'Ошибка удаления типа звонка');
+        },
+    });
+
+    // Mutations - Call Resolutions
+    const createResolutionMutation = useMutation({
+        mutationFn: async (data: CallResolutionForm) => {
+            const response = await api.post('/call-resolutions/', data);
+            return response.data;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['call-resolutions'] });
+            toast.success('Решение создано');
+            setResolutionDialog({ open: false, mode: 'create' });
+            resolutionForm.reset();
+        },
+        onError: (err: any) => {
+            toast.error(err.response?.data?.detail || 'Ошибка создания решения');
+        },
+    });
+
+    const updateResolutionMutation = useMutation({
+        mutationFn: async ({ id, data }: { id: number; data: Partial<CallResolutionForm> }) => {
+            const response = await api.patch(`/call-resolutions/${id}`, data);
+            return response.data;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['call-resolutions'] });
+            toast.success('Решение обновлено');
+            setResolutionDialog({ open: false, mode: 'create' });
+            resolutionForm.reset();
+        },
+        onError: (err: any) => {
+            toast.error(err.response?.data?.detail || 'Ошибка обновления решения');
+        },
+    });
+
+    const deleteResolutionMutation = useMutation({
+        mutationFn: async (id: number) => {
+            await api.delete(`/call-resolutions/${id}`);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['call-resolutions'] });
+            toast.success('Решение удалено');
+            setDeleteDialog({ open: false, type: 'resolution' });
+        },
+        onError: (err: any) => {
+            toast.error(err.response?.data?.detail || 'Ошибка удаления решения');
+        },
+    });
+
     // Handlers
     const toggleRegion = (id: number) => {
         setExpandedRegions((prev) => {
@@ -392,6 +546,26 @@ export default function DirectoriesPage() {
         setDeptDialog({ open: true, mode: 'edit', dept });
     };
 
+    const openCreateCallType = () => {
+        callTypeForm.reset({ name: '' });
+        setCallTypeDialog({ open: true, mode: 'create' });
+    };
+
+    const openEditCallType = (callType: CallType) => {
+        callTypeForm.reset({ name: callType.name });
+        setCallTypeDialog({ open: true, mode: 'edit', callType });
+    };
+
+    const openCreateResolution = () => {
+        resolutionForm.reset({ name: '' });
+        setResolutionDialog({ open: true, mode: 'create' });
+    };
+
+    const openEditResolution = (resolution: CallResolution) => {
+        resolutionForm.reset({ name: resolution.name });
+        setResolutionDialog({ open: true, mode: 'edit', resolution });
+    };
+
     const handleRegionSubmit = (data: RegionForm) => {
         if (regionDialog.mode === 'edit' && regionDialog.region) {
             updateRegionMutation.mutate({ id: regionDialog.region.id, data });
@@ -411,17 +585,46 @@ export default function DirectoriesPage() {
         }
     };
 
+    const handleCallTypeSubmit = (data: CallTypeForm) => {
+        if (callTypeDialog.mode === 'edit' && callTypeDialog.callType) {
+            updateCallTypeMutation.mutate({ id: callTypeDialog.callType.id, data });
+        } else {
+            createCallTypeMutation.mutate(data);
+        }
+    };
+
+    const handleResolutionSubmit = (data: CallResolutionForm) => {
+        if (resolutionDialog.mode === 'edit' && resolutionDialog.resolution) {
+            updateResolutionMutation.mutate({ id: resolutionDialog.resolution.id, data });
+        } else {
+            createResolutionMutation.mutate(data);
+        }
+    };
+
     const handleDeleteConfirm = () => {
         if (deleteDialog.type === 'region' && deleteDialog.item) {
             deleteRegionMutation.mutate((deleteDialog.item as Region).id);
         } else if (deleteDialog.type === 'department' && deleteDialog.item) {
             deleteDeptMutation.mutate((deleteDialog.item as Department).id);
+        } else if (deleteDialog.type === 'call_type' && deleteDialog.item) {
+            deleteCallTypeMutation.mutate((deleteDialog.item as CallType).id);
+        } else if (deleteDialog.type === 'resolution' && deleteDialog.item) {
+            deleteResolutionMutation.mutate((deleteDialog.item as CallResolution).id);
         }
     };
 
-    const isLoading = regionsLoading || deptsLoading;
+    const isLoading = regionsLoading || deptsLoading || callTypesLoading || resolutionsLoading;
     const isMutating = createRegionMutation.isPending || updateRegionMutation.isPending ||
         createDeptMutation.isPending || updateDeptMutation.isPending;
+    const isCallTypeMutating = createCallTypeMutation.isPending || updateCallTypeMutation.isPending;
+    const isResolutionMutating = createResolutionMutation.isPending || updateResolutionMutation.isPending;
+    const deleteLabel = deleteDialog.type === 'region'
+        ? 'регион'
+        : deleteDialog.type === 'department'
+            ? 'подразделение'
+            : deleteDialog.type === 'call_type'
+                ? 'тип звонка'
+                : 'решение';
 
     if (isLoading) {
         return (
@@ -442,7 +645,7 @@ export default function DirectoriesPage() {
                         <div>
                             <CardTitle className="text-2xl">Справочники</CardTitle>
                             <CardDescription className="mt-1">
-                                Управление регионами и подразделениями
+                                Управление регионами, подразделениями, типами звонков и решениями
                             </CardDescription>
                         </div>
                     </div>
@@ -498,6 +701,112 @@ export default function DirectoriesPage() {
                                 <p className="text-sm mt-1">Добавьте первый регион для начала работы</p>
                             </div>
                         )}
+                    </div>
+                </CardContent>
+            </Card>
+
+            <Card className="max-w-4xl mx-auto mt-6">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-6">
+                    <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 flex items-center justify-center">
+                            <PhoneCall className="w-6 h-6 text-emerald-600" />
+                        </div>
+                        <div>
+                            <CardTitle className="text-xl">Типы звонков и решения</CardTitle>
+                            <CardDescription className="mt-1">
+                                Управление типами звонков и исходами
+                            </CardDescription>
+                        </div>
+                    </div>
+                    <div className="flex gap-2">
+                        <Button onClick={openCreateCallType} className="gap-2">
+                            <Plus className="h-4 w-4" />
+                            Добавить тип
+                        </Button>
+                        <Button variant="outline" onClick={openCreateResolution} className="gap-2">
+                            <CheckCircle2 className="h-4 w-4" />
+                            Добавить решение
+                        </Button>
+                    </div>
+                </CardHeader>
+                <CardContent>
+                    <div className="grid grid-cols-2 gap-6">
+                        <div>
+                            <div className="flex items-center gap-2 mb-3">
+                                <PhoneCall className="w-4 h-4 text-emerald-600" />
+                                <span className="text-sm font-semibold text-foreground">Типы звонков</span>
+                                <Badge variant="outline" className="text-xs">{callTypes.length}</Badge>
+                            </div>
+                            <div className="space-y-2">
+                                {callTypes.length > 0 ? (
+                                    callTypes.map((callType) => (
+                                        <div key={callType.id} className="flex items-center gap-2 px-3 py-2 rounded-lg border border-border/50 bg-white">
+                                            <span className="flex-1 text-sm text-foreground">{callType.name}</span>
+                                            <div className="flex items-center gap-1">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                                                    onClick={() => openEditCallType(callType)}
+                                                >
+                                                    <Edit3 className="w-3.5 h-3.5" />
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                                    onClick={() => setDeleteDialog({ open: true, type: 'call_type', item: callType })}
+                                                >
+                                                    <Trash2 className="w-3.5 h-3.5" />
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div className="text-sm text-muted-foreground py-4 text-center border border-dashed rounded-lg">
+                                        Типов звонков пока нет
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                        <div>
+                            <div className="flex items-center gap-2 mb-3">
+                                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                                <span className="text-sm font-semibold text-foreground">Решения</span>
+                                <Badge variant="outline" className="text-xs">{callResolutions.length}</Badge>
+                            </div>
+                            <div className="space-y-2">
+                                {callResolutions.length > 0 ? (
+                                    callResolutions.map((resolution) => (
+                                        <div key={resolution.id} className="flex items-center gap-2 px-3 py-2 rounded-lg border border-border/50 bg-white">
+                                            <span className="flex-1 text-sm text-foreground">{resolution.name}</span>
+                                            <div className="flex items-center gap-1">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                                                    onClick={() => openEditResolution(resolution)}
+                                                >
+                                                    <Edit3 className="w-3.5 h-3.5" />
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                                    onClick={() => setDeleteDialog({ open: true, type: 'resolution', item: resolution })}
+                                                >
+                                                    <Trash2 className="w-3.5 h-3.5" />
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div className="text-sm text-muted-foreground py-4 text-center border border-dashed rounded-lg">
+                                        Решений пока нет
+                                    </div>
+                                )}
+                            </div>
+                        </div>
                     </div>
                 </CardContent>
             </Card>
@@ -640,21 +949,115 @@ export default function DirectoriesPage() {
                 </DialogContent>
             </Dialog>
 
+            {/* Call Type Dialog */}
+            <Dialog open={callTypeDialog.open} onOpenChange={(open) => setCallTypeDialog((prev) => ({ ...prev, open }))}>
+                <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                        <DialogTitle>
+                            {callTypeDialog.mode === 'edit' ? 'Редактирование типа звонка' : 'Новый тип звонка'}
+                        </DialogTitle>
+                        <DialogDescription>
+                            {callTypeDialog.mode === 'edit' ? 'Измените название типа звонка' : 'Добавьте новый тип звонка в справочник'}
+                        </DialogDescription>
+                    </DialogHeader>
+                    <Form {...callTypeForm}>
+                        <form onSubmit={callTypeForm.handleSubmit(handleCallTypeSubmit)} className="space-y-4">
+                            <FormField
+                                control={callTypeForm.control}
+                                name="name"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Название</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="Жалоба" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <DialogFooter>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => setCallTypeDialog({ open: false, mode: 'create' })}
+                                >
+                                    <X className="w-4 h-4 mr-2" />
+                                    Отмена
+                                </Button>
+                                <Button type="submit" disabled={isCallTypeMutating}>
+                                    {isCallTypeMutating ? (
+                                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                    ) : (
+                                        <Save className="w-4 h-4 mr-2" />
+                                    )}
+                                    {callTypeDialog.mode === 'edit' ? 'Сохранить' : 'Создать'}
+                                </Button>
+                            </DialogFooter>
+                        </form>
+                    </Form>
+                </DialogContent>
+            </Dialog>
+
+            {/* Resolution Dialog */}
+            <Dialog open={resolutionDialog.open} onOpenChange={(open) => setResolutionDialog((prev) => ({ ...prev, open }))}>
+                <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                        <DialogTitle>
+                            {resolutionDialog.mode === 'edit' ? 'Редактирование решения' : 'Новое решение'}
+                        </DialogTitle>
+                        <DialogDescription>
+                            {resolutionDialog.mode === 'edit' ? 'Измените название решения' : 'Добавьте новое решение в справочник'}
+                        </DialogDescription>
+                    </DialogHeader>
+                    <Form {...resolutionForm}>
+                        <form onSubmit={resolutionForm.handleSubmit(handleResolutionSubmit)} className="space-y-4">
+                            <FormField
+                                control={resolutionForm.control}
+                                name="name"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Название</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="Заявка направлена" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <DialogFooter>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => setResolutionDialog({ open: false, mode: 'create' })}
+                                >
+                                    <X className="w-4 h-4 mr-2" />
+                                    Отмена
+                                </Button>
+                                <Button type="submit" disabled={isResolutionMutating}>
+                                    {isResolutionMutating ? (
+                                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                    ) : (
+                                        <Save className="w-4 h-4 mr-2" />
+                                    )}
+                                    {resolutionDialog.mode === 'edit' ? 'Сохранить' : 'Создать'}
+                                </Button>
+                            </DialogFooter>
+                        </form>
+                    </Form>
+                </DialogContent>
+            </Dialog>
+
             {/* Delete Confirmation Dialog */}
             <AlertDialog open={deleteDialog.open} onOpenChange={(open) => setDeleteDialog((prev) => ({ ...prev, open }))}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
                         <AlertDialogTitle>
-                            Удалить {deleteDialog.type === 'region' ? 'регион' : 'подразделение'}?
+                            Удалить {deleteLabel}?
                         </AlertDialogTitle>
                         <AlertDialogDescription>
                             Вы уверены, что хотите удалить{' '}
                             <strong>
-                                {deleteDialog.item
-                                    ? 'name' in deleteDialog.item
-                                        ? deleteDialog.item.name
-                                        : ''
-                                    : ''}
+                            {deleteDialog.item && 'name' in deleteDialog.item ? deleteDialog.item.name : ''}
                             </strong>
                             ? Это действие нельзя отменить.
                         </AlertDialogDescription>
@@ -665,7 +1068,8 @@ export default function DirectoriesPage() {
                             onClick={handleDeleteConfirm}
                             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                         >
-                            {deleteRegionMutation.isPending || deleteDeptMutation.isPending ? (
+                            {deleteRegionMutation.isPending || deleteDeptMutation.isPending ||
+                                deleteCallTypeMutation.isPending || deleteResolutionMutation.isPending ? (
                                 <Loader2 className="h-4 w-4 animate-spin" />
                             ) : (
                                 'Удалить'

@@ -22,6 +22,8 @@ class Call(Base):
 
     # Script / Solution source
     script_id = Column(Integer, ForeignKey("scripts.id"), nullable=True)
+    call_type_id = Column(Integer, ForeignKey("call_types.id"), nullable=True)
+    resolution_id = Column(Integer, ForeignKey("call_resolutions.id"), nullable=True)
     
     # Call details
     topic = Column(String, nullable=True)
@@ -39,3 +41,5 @@ class Call(Base):
     region = relationship("Region")
     department = relationship("Department")
     script = relationship("Script")
+    call_type = relationship("CallType", back_populates="calls")
+    resolution = relationship("CallResolution", back_populates="calls")

@@ -24,6 +24,7 @@ import {
     CheckCircle2,
     Sparkles,
     Edit3,
+    Tag,
 } from 'lucide-react';
 import type { ScriptSelection } from '@/components/ScriptSelector';
 
@@ -33,10 +34,14 @@ export interface CallPreviewData {
     caller_gender?: string;
     region_id: string;
     department_id: string;
+    call_type_id: string;
+    resolution_id: string;
     description: string;
     duration_seconds: number;
     region_name?: string;
     department_name?: string;
+    call_type_name?: string;
+    resolution_name?: string;
     scriptData?: ScriptSelection | null;
     operatorNotes?: string;
 }
@@ -184,6 +189,16 @@ export function SaveCallConfirmDialog({
                                 icon={Building2}
                                 label="Отдел"
                                 value={data.department_name || `ID: ${data.department_id}`}
+                            />
+                            <InfoRow
+                                icon={Tag}
+                                label="Тип звонка"
+                                value={data.call_type_name || `ID: ${data.call_type_id}`}
+                            />
+                            <InfoRow
+                                icon={CheckCircle2}
+                                label="Решение"
+                                value={data.resolution_name || `ID: ${data.resolution_id}`}
                             />
                         </div>
                     </div>

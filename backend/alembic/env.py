@@ -18,7 +18,7 @@ from app.core.config import settings
 from app.db.session import Base
 
 # Import all models for autogenerate
-from app.models import user, region, department, call, script
+from app.models import user, region, department, call, script, call_type, call_resolution
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

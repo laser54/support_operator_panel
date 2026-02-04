@@ -23,7 +23,7 @@ import {
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/api/client';
 import { toast } from 'sonner';
-import { Play, Square, RotateCcw, Save, User, Phone, MapPin, Building2, MessageSquare, Clock, StickyNote } from 'lucide-react';
+import { Play, Square, RotateCcw, Save, User, Phone, MapPin, Building2, MessageSquare, Clock, StickyNote, Tag, CheckCircle2 } from 'lucide-react';
 import type { ScriptSelection } from '@/components/ScriptSelector';
 import { SaveCallConfirmDialog, type CallPreviewData } from '@/components/SaveCallConfirmDialog';
 
@@ -33,6 +33,8 @@ const callSchema = z.object({
     applicant_name: z.string().min(2, 'Введите имя'),
     phone_number: z.string().optional(),
     caller_gender: z.string().optional(),
+    call_type_id: z.string().min(1, 'Выберите тип звонка'),
+    resolution_id: z.string().min(1, 'Выберите решение'),
     description: z.string().min(3, 'Опишите вопрос'),
     duration_seconds: z.number().int().min(0).optional(),
 });
@@ -73,6 +75,8 @@ export function OperatorForm({ externalSelectedScript, onClearExternalScript }: 
             applicant_name: '',
             phone_number: '',
             caller_gender: '',
+            call_type_id: '',
+            resolution_id: '',
             description: '',
             duration_seconds: undefined,
         },
@@ -90,6 +94,22 @@ export function OperatorForm({ externalSelectedScript, onClearExternalScript }: 
         queryKey: ['departments'],
         queryFn: async () => {
             const response = await api.get('/departments/');
+            return response.data;
+        },
+    });
+
+    const { data: callTypes, isLoading: callTypesLoading } = useQuery({
+        queryKey: ['call-types'],
+        queryFn: async () => {
+            const response = await api.get('/call-types/');
+            return response.data;
+        },
+    });
+
+    const { data: callResolutions, isLoading: callResolutionsLoading } = useQuery({
+        queryKey: ['call-resolutions'],
+        queryFn: async () => {
+            const response = await api.get('/call-resolutions/');
             return response.data;
         },
     });
@@ -186,7 +206,9 @@ export function OperatorForm({ externalSelectedScript, onClearExternalScript }: 
                 caller_gender: confirmedData.caller_gender || null,
                 caller_region_id: confirmedData.region_id ? parseInt(confirmedData.region_id) : null,
                 caller_department_id: confirmedData.department_id ? parseInt(confirmedData.department_id) : null,
-                topic: 'General',
+                call_type_id: confirmedData.call_type_id ? parseInt(confirmedData.call_type_id) : null,
+                resolution_id: confirmedData.resolution_id ? parseInt(confirmedData.resolution_id) : null,
+                topic: confirmedData.call_type_name || 'General',
                 question: confirmedData.description,
                 solution: confirmedData.scriptData?.answer || null,
                 notes: confirmedData.operatorNotes || null,
@@ -229,6 +251,18 @@ export function OperatorForm({ externalSelectedScript, onClearExternalScript }: 
         return dept?.name;
     };
 
+    const getCallTypeName = (callTypeId: string) => {
+        if (!callTypes || !callTypeId) return undefined;
+        const callType = callTypes.find((t: any) => String(t.id) === callTypeId);
+        return callType?.name;
+    };
+
+    const getResolutionName = (resolutionId: string) => {
+        if (!callResolutions || !resolutionId) return undefined;
+        const resolution = callResolutions.find((r: any) => String(r.id) === resolutionId);
+        return resolution?.name;
+    };
+
     const onSubmit = (data: CallFormValues) => {
         // Stop timer if still running
         if (isTimerRunning) {
@@ -243,10 +277,14 @@ export function OperatorForm({ externalSelectedScript, onClearExternalScript }: 
             caller_gender: data.caller_gender,
             region_id: data.region_id,
             department_id: data.department_id,
+            call_type_id: data.call_type_id,
+            resolution_id: data.resolution_id,
             description: data.description,
             duration_seconds: data.duration_seconds ?? elapsedSeconds,
             region_name: getRegionName(data.region_id),
             department_name: getDepartmentName(data.department_id),
+            call_type_name: getCallTypeName(data.call_type_id),
+            resolution_name: getResolutionName(data.resolution_id),
             scriptData: scriptData,
             operatorNotes: operatorNotes,
         };
@@ -419,7 +457,72 @@ export function OperatorForm({ externalSelectedScript, onClearExternalScript }: 
                             />
                         </div>
 
-                        {/* Row 3: Gender - inline compact */}
+                        {/* Row 3: Call Type & Resolution */}
+                        <div className="grid grid-cols-2 gap-3">
+                            <FormField
+                                control={form.control}
+                                name="call_type_id"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+                                            <Tag className="w-3 h-3" /> Тип звонка
+                                        </FormLabel>
+                                        <Select value={field.value} onValueChange={field.onChange}>
+                                            <FormControl>
+                                                <SelectTrigger className="h-9">
+                                                    <SelectValue placeholder="Выберите..." />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                {callTypesLoading ? (
+                                                    <SelectItem value="__loading" disabled>Загрузка...</SelectItem>
+                                                ) : callTypes?.length === 0 ? (
+                                                    <SelectItem value="__empty" disabled>Нет типов</SelectItem>
+                                                ) : (
+                                                    callTypes?.map((t: any) => (
+                                                        <SelectItem key={t.id} value={String(t.id)}>{t.name}</SelectItem>
+                                                    ))
+                                                )}
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control={form.control}
+                                name="resolution_id"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+                                            <CheckCircle2 className="w-3 h-3" /> Решение
+                                        </FormLabel>
+                                        <Select value={field.value} onValueChange={field.onChange}>
+                                            <FormControl>
+                                                <SelectTrigger className="h-9">
+                                                    <SelectValue placeholder="Выберите..." />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                {callResolutionsLoading ? (
+                                                    <SelectItem value="__loading" disabled>Загрузка...</SelectItem>
+                                                ) : callResolutions?.length === 0 ? (
+                                                    <SelectItem value="__empty" disabled>Нет решений</SelectItem>
+                                                ) : (
+                                                    callResolutions?.map((r: any) => (
+                                                        <SelectItem key={r.id} value={String(r.id)}>{r.name}</SelectItem>
+                                                    ))
+                                                )}
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
+
+                        {/* Row 4: Gender - inline compact */}
                         <FormField
                             control={form.control}
                             name="caller_gender"
@@ -457,7 +560,7 @@ export function OperatorForm({ externalSelectedScript, onClearExternalScript }: 
                             )}
                         />
 
-                        {/* Row 4: Description - FIXED HEIGHT */}
+                        {/* Row 5: Description - FIXED HEIGHT */}
                         <FormField
                             control={form.control}
                             name="description"
