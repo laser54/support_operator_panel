@@ -19,11 +19,13 @@ import {
     X,
     PhoneCall,
     CheckCircle2,
+    ListPlus,
 } from 'lucide-react';
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import {
     Dialog,
@@ -53,6 +55,7 @@ import {
 import {
     Form,
     FormControl,
+    FormDescription,
     FormField,
     FormItem,
     FormLabel,
@@ -93,6 +96,11 @@ const departmentSchema = z.object({
     region_id: z.string().min(1, 'Выберите регион'),
 });
 
+const departmentBulkSchema = z.object({
+    names: z.string().min(1, 'Введите хотя бы одно подразделение'),
+    region_id: z.string().min(1, 'Выберите регион'),
+});
+
 const callTypeSchema = z.object({
     name: z.string().min(2, 'Минимум 2 символа').max(100, 'Максимум 100 символов'),
 });
@@ -103,6 +111,7 @@ const callResolutionSchema = z.object({
 
 type RegionForm = z.infer<typeof regionSchema>;
 type DepartmentForm = z.infer<typeof departmentSchema>;
+type DepartmentBulkForm = z.infer<typeof departmentBulkSchema>;
 type CallTypeForm = z.infer<typeof callTypeSchema>;
 type CallResolutionForm = z.infer<typeof callResolutionSchema>;
 
@@ -117,6 +126,7 @@ function RegionRow({
     onAddDepartment,
     onEditDepartment,
     onDeleteDepartment,
+    onBulkAddDepartments,
 }: {
     region: Region;
     departments: Department[];
@@ -127,6 +137,7 @@ function RegionRow({
     onAddDepartment: () => void;
     onEditDepartment: (dept: Department) => void;
     onDeleteDepartment: (dept: Department) => void;
+    onBulkAddDepartments: () => void;
 }) {
     const regionDepts = departments.filter((d) => d.region_id === region.id);
 
@@ -221,7 +232,7 @@ function RegionRow({
                             Подразделений пока нет
                         </div>
                     )}
-                    <div className="px-4 py-2 border-t border-border/30">
+                    <div className="px-4 py-2 border-t border-border/30 space-y-2">
                         <Button
                             variant="ghost"
                             size="sm"
@@ -230,6 +241,15 @@ function RegionRow({
                         >
                             <Plus className="w-4 h-4" />
                             Добавить подразделение
+                        </Button>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-full gap-2"
+                            onClick={onBulkAddDepartments}
+                        >
+                            <ListPlus className="w-4 h-4" />
+                            Групповое добавление
                         </Button>
                     </div>
                 </div>
@@ -259,6 +279,9 @@ export default function DirectoriesPage() {
         open: false,
         mode: 'create',
     });
+    const [bulkDeptDialog, setBulkDeptDialog] = useState<{ open: boolean; regionId?: number }>({
+        open: false,
+    });
     const [deleteDialog, setDeleteDialog] = useState<{
         open: boolean;
         type: 'region' | 'department' | 'call_type' | 'resolution';
@@ -277,6 +300,11 @@ export default function DirectoriesPage() {
     const deptForm = useForm<DepartmentForm>({
         resolver: zodResolver(departmentSchema),
         defaultValues: { name: '', region_id: '' },
+    });
+
+    const deptBulkForm = useForm<DepartmentBulkForm>({
+        resolver: zodResolver(departmentBulkSchema),
+        defaultValues: { names: '', region_id: '' },
     });
 
     const callTypeForm = useForm<CallTypeForm>({
@@ -419,6 +447,42 @@ export default function DirectoriesPage() {
         },
     });
 
+    const createBulkDeptMutation = useMutation({
+        mutationFn: async ({ names, regionId }: { names: string[]; regionId: number }) => {
+            const results = await Promise.allSettled(
+                names.map((name) =>
+                    api.post('/departments/', { name, region_id: regionId })
+                )
+            );
+            const failedNames: string[] = [];
+            results.forEach((result, index) => {
+                if (result.status === 'rejected') {
+                    failedNames.push(names[index]);
+                }
+            });
+            return {
+                createdCount: names.length - failedNames.length,
+                failedCount: failedNames.length,
+                failedNames,
+            };
+        },
+        onSuccess: (result) => {
+            queryClient.invalidateQueries({ queryKey: ['departments'] });
+            if (result.failedCount === 0) {
+                toast.success(`Добавлено подразделений: ${result.createdCount}`);
+            } else if (result.createdCount > 0) {
+                toast.warning(`Добавлено: ${result.createdCount}, не удалось: ${result.failedCount}`);
+            } else {
+                toast.error('Не удалось добавить подразделения');
+            }
+            setBulkDeptDialog({ open: false });
+            deptBulkForm.reset();
+        },
+        onError: (err: any) => {
+            toast.error(err.response?.data?.detail || 'Ошибка группового добавления');
+        },
+    });
+
     // Mutations - Call Types
     const createCallTypeMutation = useMutation({
         mutationFn: async (data: CallTypeForm) => {
@@ -546,6 +610,11 @@ export default function DirectoriesPage() {
         setDeptDialog({ open: true, mode: 'edit', dept });
     };
 
+    const openBulkAddDept = (regionId: number) => {
+        deptBulkForm.reset({ names: '', region_id: String(regionId) });
+        setBulkDeptDialog({ open: true, regionId });
+    };
+
     const openCreateCallType = () => {
         callTypeForm.reset({ name: '' });
         setCallTypeDialog({ open: true, mode: 'create' });
@@ -585,6 +654,21 @@ export default function DirectoriesPage() {
         }
     };
 
+    const handleBulkDeptSubmit = (data: DepartmentBulkForm) => {
+        const names = data.names
+            .split(/\r?\n/)
+            .map((name) => name.trim())
+            .filter(Boolean);
+        if (names.length === 0) {
+            toast.error('Список подразделений пуст');
+            return;
+        }
+        createBulkDeptMutation.mutate({
+            names,
+            regionId: parseInt(data.region_id),
+        });
+    };
+
     const handleCallTypeSubmit = (data: CallTypeForm) => {
         if (callTypeDialog.mode === 'edit' && callTypeDialog.callType) {
             updateCallTypeMutation.mutate({ id: callTypeDialog.callType.id, data });
@@ -616,6 +700,7 @@ export default function DirectoriesPage() {
     const isLoading = regionsLoading || deptsLoading || callTypesLoading || resolutionsLoading;
     const isMutating = createRegionMutation.isPending || updateRegionMutation.isPending ||
         createDeptMutation.isPending || updateDeptMutation.isPending;
+    const isBulkMutating = createBulkDeptMutation.isPending;
     const isCallTypeMutating = createCallTypeMutation.isPending || updateCallTypeMutation.isPending;
     const isResolutionMutating = createResolutionMutation.isPending || updateResolutionMutation.isPending;
     const deleteLabel = deleteDialog.type === 'region'
@@ -692,6 +777,7 @@ export default function DirectoriesPage() {
                                     onAddDepartment={() => openCreateDept(region.id)}
                                     onEditDepartment={openEditDept}
                                     onDeleteDepartment={(dept) => setDeleteDialog({ open: true, type: 'department', item: dept })}
+                                    onBulkAddDepartments={() => openBulkAddDept(region.id)}
                                 />
                             ))
                         ) : (
@@ -942,6 +1028,85 @@ export default function DirectoriesPage() {
                                         <Save className="w-4 h-4 mr-2" />
                                     )}
                                     {deptDialog.mode === 'edit' ? 'Сохранить' : 'Создать'}
+                                </Button>
+                            </DialogFooter>
+                        </form>
+                    </Form>
+                </DialogContent>
+            </Dialog>
+
+            {/* Bulk Department Dialog */}
+            <Dialog open={bulkDeptDialog.open} onOpenChange={(open) => setBulkDeptDialog((prev) => ({ ...prev, open }))}>
+                <DialogContent className="sm:max-w-[520px]">
+                    <DialogHeader>
+                        <DialogTitle>Групповое добавление подразделений</DialogTitle>
+                        <DialogDescription>
+                            Введите список подразделений, каждое в отдельной строке
+                        </DialogDescription>
+                    </DialogHeader>
+                    <Form {...deptBulkForm}>
+                        <form onSubmit={deptBulkForm.handleSubmit(handleBulkDeptSubmit)} className="space-y-4">
+                            <FormField
+                                control={deptBulkForm.control}
+                                name="names"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Список подразделений</FormLabel>
+                                        <FormControl>
+                                            <Textarea
+                                                placeholder={'Отдел продаж\nОтдел поддержки\nОтдел логистики'}
+                                                rows={8}
+                                                {...field}
+                                            />
+                                        </FormControl>
+                                        <FormDescription>Пустые строки будут проигнорированы</FormDescription>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={deptBulkForm.control}
+                                name="region_id"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Регион</FormLabel>
+                                        <Select onValueChange={field.onChange} value={field.value}>
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Выберите регион" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                {regions.map((r) => (
+                                                    <SelectItem key={r.id} value={String(r.id)}>
+                                                        <div className="flex items-center gap-2">
+                                                            <MapPin className="w-4 h-4 text-muted-foreground" />
+                                                            {r.name}
+                                                        </div>
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <DialogFooter>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => setBulkDeptDialog({ open: false })}
+                                >
+                                    <X className="w-4 h-4 mr-2" />
+                                    Отмена
+                                </Button>
+                                <Button type="submit" disabled={isBulkMutating}>
+                                    {isBulkMutating ? (
+                                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                    ) : (
+                                        <Save className="w-4 h-4 mr-2" />
+                                    )}
+                                    Добавить
                                 </Button>
                             </DialogFooter>
                         </form>
