@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/api/client';
 import { Input } from '@/components/ui/input';
@@ -9,6 +9,11 @@ import { Search, Copy, Check, Sparkles, ArrowRight, BookOpen, ChevronDown, Flame
 import { toast } from 'sonner';
 
 import type { ScriptSelection } from '@/components/ScriptSelector';
+
+// Ref interface для внешнего управления панелью
+export interface KnowledgePanelRef {
+    focusSearch: () => void;
+}
 
 interface KnowledgePanelProps {
     onSelectScript?: (script: ScriptSelection) => void;
@@ -31,11 +36,23 @@ const pluralizeMentions = (count: number) => {
     return 'упоминаний';
 };
 
-export function KnowledgePanel({ onSelectScript, resetSignal }: KnowledgePanelProps) {
+export const KnowledgePanel = forwardRef<KnowledgePanelRef, KnowledgePanelProps>(function KnowledgePanel(
+    { onSelectScript, resetSignal },
+    ref
+) {
     const [query, setQuery] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
     const [copiedId, setCopiedId] = useState<string | null>(null);
     const [topRange, setTopRange] = useState<TopRange>('recent');
+    const searchInputRef = useRef<HTMLInputElement>(null);
+
+    // Ref для внешнего управления
+    useImperativeHandle(ref, () => ({
+        focusSearch: () => {
+            searchInputRef.current?.focus();
+            searchInputRef.current?.select();
+        },
+    }), []);
 
     const { data, isLoading, isError } = useQuery({
         queryKey: ['search', searchQuery],
@@ -134,7 +151,8 @@ export function KnowledgePanel({ onSelectScript, resetSignal }: KnowledgePanelPr
                     <div className="relative flex-1">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
                         <Input
-                            placeholder="Введите вопрос клиента..."
+                            ref={searchInputRef}
+                            placeholder="Введите вопрос клиента... (Ctrl+S)"
                             className="pl-10 pr-10 h-11 bg-white border border-zinc-300 text-zinc-900 placeholder:text-zinc-400 focus-visible:ring-2 focus-visible:ring-zinc-400"
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}
@@ -368,4 +386,4 @@ export function KnowledgePanel({ onSelectScript, resetSignal }: KnowledgePanelPr
             </div>
         </div>
     );
-}
+});

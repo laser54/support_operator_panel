@@ -1,49 +1,18 @@
-import { useState, useEffect } from 'react';
-import { Outlet, useNavigate, NavLink } from 'react-router-dom';
+import { Outlet, useNavigate, NavLink, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { LogOut, Phone, History, LayoutDashboard, Users, Clock, BookOpen, FileQuestion } from 'lucide-react';
+import { LogOut, Phone, History, LayoutDashboard, Users, BookOpen, FileQuestion } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCurrentUser } from '@/hooks/use-current-user';
 import { Logo } from '@/components/ui/Logo';
-
-function LiveClock() {
-    const [time, setTime] = useState(new Date());
-
-    useEffect(() => {
-        const interval = setInterval(() => setTime(new Date()), 1000);
-        return () => clearInterval(interval);
-    }, []);
-
-    const formattedTime = time.toLocaleTimeString('ru-RU', {
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-    });
-
-    const formattedDate = time.toLocaleDateString('ru-RU', {
-        weekday: 'short',
-        day: 'numeric',
-        month: 'short',
-    });
-
-    return (
-        <div className="flex items-center gap-3 px-4 py-2 bg-zinc-900 rounded-xl border border-zinc-800">
-            <Clock className="w-4 h-4 text-primary" />
-            <div className="flex flex-col items-end">
-                <span className="text-lg font-mono font-bold tabular-nums text-white tracking-wider">
-                    {formattedTime}
-                </span>
-                <span className="text-[10px] text-zinc-400 uppercase tracking-wider">
-                    {formattedDate}
-                </span>
-            </div>
-        </div>
-    );
-}
+import { OperatorStatsWidget } from '@/components/OperatorStatsWidget';
 
 export default function AppLayout() {
     const navigate = useNavigate();
+    const location = useLocation();
     const { data: currentUser } = useCurrentUser();
+    
+    // Показываем виджет статистики только на главной странице (рабочее место оператора)
+    const showOperatorStats = location.pathname === '/';
 
     const overrideUntil = currentUser?.role_override_until
         ? new Date(currentUser.role_override_until)
@@ -164,9 +133,10 @@ export default function AppLayout() {
                         </nav>
                     </div>
 
-                    {/* Right: Clock, User, Logout */}
+                    {/* Right: Stats, User, Logout */}
                     <div className="flex items-center gap-4">
-                        <LiveClock />
+                        {/* Виджет статистики оператора (всплывающий) */}
+                        {showOperatorStats && <OperatorStatsWidget />}
 
                         {currentUser && (
                             <div className="flex items-center gap-3 pl-4 border-l border-zinc-800">

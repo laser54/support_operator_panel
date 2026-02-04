@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useRef } from 'react';
+import { useEffect, useMemo, useState, useRef, forwardRef, useImperativeHandle } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -27,6 +27,12 @@ import { toast } from 'sonner';
 import { Play, Square, RotateCcw, Save, User, Phone, MapPin, Building2, MessageSquare, Clock, StickyNote, Tag, CheckCircle2, FileQuestion, Link2Off } from 'lucide-react';
 import type { ScriptSelection } from '@/components/ScriptSelector';
 import { SaveCallConfirmDialog, type CallPreviewData } from '@/components/SaveCallConfirmDialog';
+
+// Ref interface для внешнего управления формой
+export interface OperatorFormRef {
+    submitForm: () => void;
+    resetForm: () => void;
+}
 
 const callSchema = z.object({
     region_id: z.string().min(1, 'Выберите регион'),
@@ -58,7 +64,10 @@ interface OperatorFormProps {
     onCallSaved?: () => void;
 }
 
-export function OperatorForm({ externalSelectedScript, onClearExternalScript, onCallSaved }: OperatorFormProps) {
+export const OperatorForm = forwardRef<OperatorFormRef, OperatorFormProps>(function OperatorForm(
+    { externalSelectedScript, onClearExternalScript, onCallSaved },
+    ref
+) {
     const [isTimerRunning, setIsTimerRunning] = useState(false);
     const [elapsedSeconds, setElapsedSeconds] = useState(0);
     const [isTimerStopped, setIsTimerStopped] = useState(false);
@@ -87,6 +96,36 @@ export function OperatorForm({ externalSelectedScript, onClearExternalScript, on
             duration_seconds: undefined,
         },
     });
+
+    // Ref для внешнего управления
+    const formRef = useRef<HTMLFormElement>(null);
+    
+    useImperativeHandle(ref, () => ({
+        submitForm: () => {
+            formRef.current?.requestSubmit();
+        },
+        resetForm: () => {
+            const hasData = form.getValues('applicant_name') || 
+                           form.getValues('description') || 
+                           form.getValues('phone_number') ||
+                           form.getValues('region_id');
+            if (hasData) {
+                if (window.confirm('Очистить форму? Несохранённые данные будут потеряны.')) {
+                    form.reset();
+                    setIsTimerRunning(false);
+                    setIsTimerStopped(false);
+                    setElapsedSeconds(0);
+                    setScriptData(null);
+                    setOperatorAnswer('');
+                    setOperatorNotes('');
+                    setReviewEnabled(false);
+                    startTimeRef.current = null;
+                    if (onClearExternalScript) onClearExternalScript();
+                    toast.info('Форма очищена');
+                }
+            }
+        },
+    }), [form, onClearExternalScript]);
 
     const { data: regions, isLoading: regionsLoading } = useQuery({
         queryKey: ['regions'],
@@ -413,7 +452,7 @@ export function OperatorForm({ externalSelectedScript, onClearExternalScript, on
 
             {/* Form Content - SCROLLABLE */}
             <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="flex-1 flex flex-col">
+                <form ref={formRef} onSubmit={form.handleSubmit(onSubmit)} className="flex-1 flex flex-col">
                     <div className="flex-1 p-3 space-y-2">
                         {/* Row 1: Region & Department */}
                         <div className="grid grid-cols-2 gap-3">
@@ -778,6 +817,7 @@ export function OperatorForm({ externalSelectedScript, onClearExternalScript, on
                             type="submit"
                             disabled={submitMutation.isPending}
                             className="w-full h-11 text-sm font-semibold bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg"
+                            title="Сохранить звонок (Ctrl+Enter)"
                         >
                             {submitMutation.isPending ? (
                                 'Сохранение...'
@@ -785,6 +825,9 @@ export function OperatorForm({ externalSelectedScript, onClearExternalScript, on
                                 <>
                                     <Save className="w-4 h-4 mr-2" />
                                     Сохранить звонок
+                                    <kbd className="ml-2 hidden sm:inline-flex items-center gap-0.5 rounded bg-primary-foreground/20 px-1.5 py-0.5 text-[10px] font-medium">
+                                        Ctrl+↵
+                                    </kbd>
                                 </>
                             )}
                         </Button>
@@ -802,4 +845,4 @@ export function OperatorForm({ externalSelectedScript, onClearExternalScript, on
             />
         </div>
     );
-}
+});

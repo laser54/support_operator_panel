@@ -15,6 +15,21 @@ const badgeVariants = cva(
                 destructive:
                     "border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80",
                 outline: "text-foreground",
+                // Цветные варианты для типов звонков
+                blue: "border-transparent bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400",
+                green: "border-transparent bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400",
+                yellow: "border-transparent bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400",
+                orange: "border-transparent bg-orange-100 text-orange-700 dark:bg-orange-500/20 dark:text-orange-400",
+                red: "border-transparent bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400",
+                purple: "border-transparent bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-400",
+                pink: "border-transparent bg-pink-100 text-pink-700 dark:bg-pink-500/20 dark:text-pink-400",
+                cyan: "border-transparent bg-cyan-100 text-cyan-700 dark:bg-cyan-500/20 dark:text-cyan-400",
+                // Специальные варианты для резолюций
+                success: "border-transparent bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400",
+                warning: "border-transparent bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400",
+                error: "border-transparent bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400",
+                info: "border-transparent bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400",
+                muted: "border-transparent bg-zinc-100 text-zinc-600 dark:bg-zinc-500/20 dark:text-zinc-400",
             },
         },
         defaultVariants: {

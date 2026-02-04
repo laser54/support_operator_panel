@@ -14,6 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 import {
     Select,
     SelectContent,
@@ -39,6 +40,51 @@ import {
     createColumnHelper,
 } from '@tanstack/react-table';
 
+// Цветовая карта для типов звонков
+const callTypeColors: Record<string, 'blue' | 'orange' | 'purple' | 'cyan' | 'pink' | 'yellow' | 'muted'> = {
+    'консультация': 'blue',
+    'жалоба': 'orange',
+    'предложение': 'purple',
+    'вопрос': 'cyan',
+    'запрос': 'pink',
+    'обращение': 'yellow',
+};
+
+// Цветовая карта для резолюций
+const resolutionColors: Record<string, 'success' | 'warning' | 'error' | 'info' | 'muted'> = {
+    'решено': 'success',
+    'решен': 'success',
+    'выполнено': 'success',
+    'отказано': 'error',
+    'отклонено': 'error',
+    'в работе': 'warning',
+    'ожидает': 'warning',
+    'ожидание': 'warning',
+    'передано': 'info',
+    'перенаправлено': 'info',
+    'информирован': 'info',
+};
+
+// Получить цвет для типа звонка
+function getCallTypeColor(name: string | null | undefined): 'blue' | 'orange' | 'purple' | 'cyan' | 'pink' | 'yellow' | 'muted' {
+    if (!name) return 'muted';
+    const lower = name.toLowerCase();
+    for (const [key, color] of Object.entries(callTypeColors)) {
+        if (lower.includes(key)) return color;
+    }
+    return 'muted';
+}
+
+// Получить цвет для резолюции
+function getResolutionColor(name: string | null | undefined): 'success' | 'warning' | 'error' | 'info' | 'muted' {
+    if (!name) return 'muted';
+    const lower = name.toLowerCase();
+    for (const [key, color] of Object.entries(resolutionColors)) {
+        if (lower.includes(key)) return color;
+    }
+    return 'muted';
+}
+
 type Call = {
     id: number;
     operator_id: number;
@@ -48,6 +94,8 @@ type Call = {
     caller_gender: string | null;
     region: { name: string } | null;
     department: { name: string } | null;
+    call_type: { id: number; name: string } | null;
+    resolution: { id: number; name: string } | null;
     question: string;
     solution: string | null;
     notes: string | null;
@@ -196,10 +244,36 @@ export default function HistoryPage() {
                     </div>
                 ),
             }),
+            columnHelper.display({
+                id: 'call_type',
+                header: 'Тип',
+                cell: (info) => {
+                    const callType = info.row.original.call_type;
+                    if (!callType) return <span className="text-muted-foreground">-</span>;
+                    return (
+                        <Badge variant={getCallTypeColor(callType.name)} className="whitespace-nowrap">
+                            {callType.name}
+                        </Badge>
+                    );
+                },
+            }),
+            columnHelper.display({
+                id: 'resolution',
+                header: 'Результат',
+                cell: (info) => {
+                    const resolution = info.row.original.resolution;
+                    if (!resolution) return <span className="text-muted-foreground">-</span>;
+                    return (
+                        <Badge variant={getResolutionColor(resolution.name)} className="whitespace-nowrap">
+                            {resolution.name}
+                        </Badge>
+                    );
+                },
+            }),
             columnHelper.accessor('question', {
                 header: 'Вопрос',
                 cell: (info) => (
-                    <div className="max-w-[200px] truncate" title={info.getValue()}>
+                    <div className="max-w-[180px] truncate" title={info.getValue()}>
                         {info.getValue()}
                     </div>
                 ),
