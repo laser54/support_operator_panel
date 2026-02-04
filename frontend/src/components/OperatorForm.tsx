@@ -252,7 +252,6 @@ export function OperatorForm({ externalSelectedScript, onClearExternalScript }: 
                 solution: confirmedData.scriptData?.answer || null,
                 notes: confirmedData.operatorNotes || null,
                 script: confirmedData.scriptData,
-                status: 'closed',
                 duration_seconds: confirmedData.duration_seconds,
             };
             const response = await api.post('/calls/', payload);

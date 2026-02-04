@@ -244,7 +244,6 @@ export function CallForm({ externalSelectedScript, onClearExternalScript }: Call
                 solution: scriptData?.answer || null,
                 notes: operatorNotes || null,
                 script: scriptData,
-                status: 'closed',
                 duration_seconds: data.duration_seconds ?? null,
             };
             const response = await api.post('/calls/', payload);
