@@ -12,8 +12,15 @@ class RegionCreate(RegionBase):
     pass
 
 
+class RegionUpdate(BaseModel):
+    """Region update schema."""
+    name: str | None = None
+    code: str | None = None
+
+
 class RegionRead(RegionBase):
     """Region read schema."""
     id: int
 
     model_config = ConfigDict(from_attributes=True)
+

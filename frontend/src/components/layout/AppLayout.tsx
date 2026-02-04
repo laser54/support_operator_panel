@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Outlet, useNavigate, NavLink } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { LogOut, Phone, History, LayoutDashboard, Users, Clock } from 'lucide-react';
+import { LogOut, Phone, History, LayoutDashboard, Users, Clock, BookOpen } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCurrentUser } from '@/hooks/use-current-user';
 import { Logo } from '@/components/ui/Logo';
@@ -115,6 +115,20 @@ export default function AppLayout() {
                                 >
                                     <Users className="h-4 w-4" />
                                     Пользователи
+                                </NavLink>
+                            )}
+                            {isAdmin && (
+                                <NavLink
+                                    to="/directories"
+                                    className={({ isActive }) =>
+                                        `flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all ${isActive
+                                            ? 'bg-primary text-primary-foreground'
+                                            : 'text-zinc-400 hover:bg-white/10 hover:text-white'
+                                        }`
+                                    }
+                                >
+                                    <BookOpen className="h-4 w-4" />
+                                    Справочники
                                 </NavLink>
                             )}
                         </nav>
