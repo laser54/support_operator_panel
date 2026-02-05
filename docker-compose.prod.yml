@@ -40,7 +40,6 @@ services:
         condition: service_healthy
     labels:
       - traefik.enable=true
-      - traefik.docker.network=rag-stack_internal
       # HTTP -> HTTPS for API
       - traefik.http.routers.support-api-http.rule=Host(`support.larin.work`) && PathPrefix(`/api`)
       - traefik.http.routers.support-api-http.entrypoints=web
@@ -72,8 +71,6 @@ services:
 
 networks:
   internal:
-    external: true
-    name: rag-stack_internal
 
 volumes:
   support-panel-db-data:
