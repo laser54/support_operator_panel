@@ -49,27 +49,22 @@ Go to: **Repository → Settings → Secrets and variables → Actions → New r
 
 ### 2️⃣ VPS Configuration / Настройка VPS
 
-#### A. Add services to `/opt/rag-stack/docker-compose.yml`
+#### A. Создать override файл на VPS
 
-Добавьте содержимое `docker-compose.prod.yml` в ваш основной compose файл на VPS:
-
-```bash
-ssh root@your-vps-ip
-cd /opt/rag-stack
-nano docker-compose.yml
-```
-
-Скопируйте сервисы из `docker-compose.prod.yml` (support-panel-frontend, support-panel-backend, support-panel-db) в ваш docker-compose.yml.
-
-**ИЛИ** используйте как override:
+Скопируйте `docker-compose.prod.yml` на сервер как отдельный override файл:
 
 ```bash
-# Скопируйте файл
+# Вариант 1: через scp
 scp docker-compose.prod.yml root@your-vps:/opt/rag-stack/docker-compose.support-panel.yml
 
-# На VPS используйте:
-docker compose -f docker-compose.yml -f docker-compose.support-panel.yml up -d
+# Вариант 2: вручную создать на сервере
+ssh root@your-vps-ip
+cd /opt/rag-stack
+nano docker-compose.support-panel.yml
+# вставить содержимое docker-compose.prod.yml
 ```
+
+> ⚠️ **ВАЖНО:** Файл должен называться `docker-compose.support-panel.yml` (не docker-compose.prod.yml)
 
 #### B. Environment Variables on VPS
 
@@ -106,14 +101,17 @@ cd /opt/rag-stack
 # Убедитесь что сеть существует
 docker network create rag-stack_internal 2>/dev/null || true
 
+# Используем override файл
+COMPOSE_FILES="-f docker-compose.yml -f docker-compose.support-panel.yml"
+
 # Поднимите сервисы
-docker compose up -d support-panel-frontend support-panel-backend support-panel-db
+docker compose $COMPOSE_FILES up -d support-panel-frontend support-panel-backend support-panel-db
 
 # Дождитесь запуска БД
 sleep 10
 
 # Выполните миграции
-docker compose exec support-panel-backend uv run alembic upgrade head
+docker compose $COMPOSE_FILES exec support-panel-backend uv run alembic upgrade head
 
 # Проверьте статус
 docker ps | grep support-panel
@@ -139,6 +137,8 @@ docker ps | grep support-panel
    - Build backend image → push `la5er/support-panel-backend:latest`
 3. **Deploy Job:**
    - SSH в VPS
+   - `cd /opt/rag-stack`
+   - Использует два compose файла: `docker-compose.yml` + `docker-compose.support-panel.yml`
    - `docker compose pull` - скачивает новые образы
    - `docker compose up -d` - перезапускает сервисы
    - `alembic upgrade head` - применяет миграции
@@ -149,37 +149,47 @@ docker ps | grep support-panel
 
 ### Logs / Логи
 ```bash
+cd /opt/rag-stack
+COMPOSE_FILES="-f docker-compose.yml -f docker-compose.support-panel.yml"
+
 # Все логи
-docker compose logs -f support-panel-backend
+docker compose $COMPOSE_FILES logs -f support-panel-backend
 
 # Только ошибки
-docker compose logs support-panel-backend 2>&1 | grep -i error
+docker compose $COMPOSE_FILES logs support-panel-backend 2>&1 | grep -i error
 ```
 
 ### Restart Services / Перезапуск
 ```bash
-docker compose restart support-panel-backend support-panel-frontend
+docker compose $COMPOSE_FILES restart support-panel-backend support-panel-frontend
 ```
 
 ### Database Access / Доступ к БД
 ```bash
-docker compose exec support-panel-db psql -U postgres -d support_panel
+docker compose $COMPOSE_FILES exec support-panel-db psql -U postgres -d support_panel
 ```
 
 ### Force Rebuild / Принудительная пересборка
 ```bash
-docker compose pull support-panel-frontend support-panel-backend
-docker compose up -d --force-recreate support-panel-frontend support-panel-backend
+docker compose $COMPOSE_FILES pull support-panel-frontend support-panel-backend
+docker compose $COMPOSE_FILES up -d --force-recreate support-panel-frontend support-panel-backend
 ```
+
+### YAML Errors / Ошибки YAML
+Если видите ошибку `mapping key "services" already defined`:
+- Убедитесь что используете override файл (`docker-compose.support-panel.yml`)
+- НЕ добавляйте содержимое в основной `docker-compose.yml` напрямую
+- Используйте флаг `-f` для обоих файлов
 
 ---
 
-## 📁 Files Created / Созданные файлы
+## 📁 Files / Файлы проекта
 
 | File | Purpose |
 |------|---------|
 | `backend/Dockerfile` | Production Docker image for FastAPI |
 | `frontend/Dockerfile` | Production Docker image for Vite (nginx) |
 | `frontend/nginx.conf` | Nginx config for SPA |
-| `docker-compose.prod.yml` | Production services with Traefik labels |
+| `docker-compose.prod.yml` | Override файл для VPS (копируется как `docker-compose.support-panel.yml`) |
 | `.github/workflows/deploy.yml` | GitHub Actions CI/CD workflow |
+| `docs/DEPLOYMENT.md` | Это руководство |

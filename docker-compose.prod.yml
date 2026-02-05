@@ -1,9 +1,10 @@
 # Production Docker Compose for Support Operator Panel
-# Add these services to /opt/rag-stack/docker-compose.yml or use as override
+# This file is used as an OVERRIDE on VPS at /opt/rag-stack/
 #
-# Usage on VPS:
-# 1. Copy this file to /opt/rag-stack/docker-compose.support-panel.yml
-# 2. Run: docker compose -f docker-compose.yml -f docker-compose.support-panel.yml up -d
+# SETUP on VPS:
+# 1. Copy this file to: /opt/rag-stack/docker-compose.support-panel.yml
+# 2. Add to .env: POSTGRES_PASSWORD=xxx and SUPPORT_PANEL_SECRET_KEY=xxx
+# 3. Deploy uses: docker compose -f docker-compose.yml -f docker-compose.support-panel.yml up -d
 
 services:
   # Frontend for https://support.larin.work
