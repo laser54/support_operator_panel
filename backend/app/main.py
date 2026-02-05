@@ -31,3 +31,9 @@ app.include_router(scripts.router, prefix="/api/v1")
 @app.get("/")
 async def root():
     return {"status": "ok", "service": "support-panel"}
+
+
+@app.get("/api/v1/health")
+async def health():
+    """Health check endpoint for Docker/Kubernetes."""
+    return {"status": "healthy", "service": "support-panel"}

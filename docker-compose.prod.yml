@@ -1,19 +1,78 @@
-version: '3.8'
+# Production Docker Compose for Support Operator Panel
+# Add these services to /opt/rag-stack/docker-compose.yml or use as override
+#
+# Usage on VPS:
+# 1. Copy this file to /opt/rag-stack/docker-compose.support-panel.yml
+# 2. Run: docker compose -f docker-compose.yml -f docker-compose.support-panel.yml up -d
+
 services:
-  backend:
-    build: ./backend
-    ports:
-      - "8000:8000"
+  # Frontend for https://support.larin.work
+  support-panel-frontend:
+    image: la5er/support-panel-frontend:latest
+    restart: unless-stopped
+    networks: [internal]
+    labels:
+      - traefik.enable=true
+      # HTTP -> HTTPS redirect
+      - traefik.http.routers.support-frontend-http.rule=Host(`support.larin.work`)
+      - traefik.http.routers.support-frontend-http.entrypoints=web
+      - traefik.http.routers.support-frontend-http.middlewares=to-https@docker
+      # HTTPS
+      - traefik.http.routers.support-frontend.rule=Host(`support.larin.work`)
+      - traefik.http.routers.support-frontend.entrypoints=websecure
+      - traefik.http.routers.support-frontend.tls=true
+      - traefik.http.routers.support-frontend.tls.certresolver=le
+      - traefik.http.services.support-frontend.loadbalancer.server.port=80
+
+  # Backend API for https://support.larin.work/api
+  support-panel-backend:
+    image: la5er/support-panel-backend:latest
+    restart: unless-stopped
+    networks: [internal]
     environment:
       - APP_ENV=production
-      - DATABASE_URL=postgresql://user:password@db:5432/support_panel
-  frontend:
-    build: ./frontend
-    ports:
-      - "80:80"
-  db:
-    image: postgres:15
+      - DATABASE_URL=postgresql+asyncpg://postgres:${POSTGRES_PASSWORD:-postgres}@support-panel-db:5432/support_panel
+      - SECRET_KEY=${SUPPORT_PANEL_SECRET_KEY:-change-me-in-production}
+      - FRONTEND_URL=https://support.larin.work
+    depends_on:
+      support-panel-db:
+        condition: service_healthy
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=rag-stack_internal
+      # HTTP -> HTTPS for API
+      - traefik.http.routers.support-api-http.rule=Host(`support.larin.work`) && PathPrefix(`/api`)
+      - traefik.http.routers.support-api-http.entrypoints=web
+      - traefik.http.routers.support-api-http.middlewares=to-https@docker
+      # HTTPS for API
+      - traefik.http.routers.support-api.rule=Host(`support.larin.work`) && PathPrefix(`/api`)
+      - traefik.http.routers.support-api.entrypoints=websecure
+      - traefik.http.routers.support-api.tls=true
+      - traefik.http.routers.support-api.tls.certresolver=le
+      - traefik.http.routers.support-api.priority=100
+      - traefik.http.services.support-api.loadbalancer.server.port=8000
+
+  # PostgreSQL Database
+  support-panel-db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    networks: [internal]
     environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       POSTGRES_DB: support_panel
+    volumes:
+      - support-panel-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+networks:
+  internal:
+    external: true
+    name: rag-stack_internal
+
+volumes:
+  support-panel-db-data:
