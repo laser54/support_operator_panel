@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/api/client';
+import { useAuthToken } from '@/hooks/use-auth-token';
 
 export type CurrentUser = {
     id: number;
@@ -12,10 +13,12 @@ export type CurrentUser = {
 };
 
 export function useCurrentUser() {
-    const token = localStorage.getItem('token');
+    const token = useAuthToken();
 
     return useQuery<CurrentUser>({
-        queryKey: ['currentUser'],
+        // Важно: token в ключе, чтобы при смене аккаунта в том же браузере
+        // не использовать закэшированные данные предыдущего пользователя.
+        queryKey: ['currentUser', token],
         queryFn: async () => {
             const response = await api.get('/auth/me');
             return response.data;

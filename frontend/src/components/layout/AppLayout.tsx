@@ -5,10 +5,13 @@ import { toast } from 'sonner';
 import { useCurrentUser } from '@/hooks/use-current-user';
 import { Logo } from '@/components/ui/Logo';
 import { OperatorStatsWidget } from '@/components/OperatorStatsWidget';
+import { clearAuthToken } from '@/auth/token';
+import { useQueryClient } from '@tanstack/react-query';
 
 export default function AppLayout() {
     const navigate = useNavigate();
     const location = useLocation();
+    const queryClient = useQueryClient();
     const { data: currentUser } = useCurrentUser();
     
     // Показываем виджет статистики только на главной странице (рабочее место оператора)
@@ -33,9 +36,12 @@ export default function AppLayout() {
     const roleSuffix = hasActiveOverride ? ' (временно)' : '';
 
     const handleLogout = () => {
-        localStorage.removeItem('token');
+        // Сброс токена + кэшей, чтобы в этом же браузере/вкладке
+        // не "протекали" данные/роль предыдущего пользователя.
+        clearAuthToken();
+        queryClient.clear();
         toast.info('Вы вышли из системы');
-        navigate('/login');
+        navigate('/login', { replace: true });
     };
 
     return (

@@ -4,6 +4,7 @@ import { QueryProvider } from '@/providers/QueryProvider';
 import LoginPage from '@/pages/LoginPage';
 import HomePage from '@/pages/HomePage';
 import AppLayout from '@/components/layout/AppLayout';
+import { useAuthToken } from '@/hooks/use-auth-token';
 
 import HistoryPage from '@/pages/HistoryPage';
 import DashboardPage from '@/pages/DashboardPage';
@@ -12,7 +13,7 @@ import DirectoriesPage from '@/pages/DirectoriesPage';
 import ScriptsReviewPage from '@/pages/ScriptsReviewPage';
 
 function ProtectedRoute({ children }: { children: JSX.Element }) {
-  const token = localStorage.getItem('token');
+  const token = useAuthToken();
   if (!token) {
     return <Navigate to="/login" replace />;
   }

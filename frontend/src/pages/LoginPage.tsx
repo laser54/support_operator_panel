@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,6 +10,7 @@ import { Card, CardHeader, CardContent, CardTitle, CardDescription } from '@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { api } from '@/api/client';
 import { toast } from 'sonner';
+import { setAuthToken } from '@/auth/token';
 
 const loginSchema = z.object({
     username: z.string().min(1, 'Username is required'),
@@ -21,6 +22,7 @@ type LoginForm = z.infer<typeof loginSchema>;
 export default function LoginPage() {
     const navigate = useNavigate();
     const [error, setError] = useState('');
+    const queryClient = useQueryClient();
 
     const form = useForm<LoginForm>({
         resolver: zodResolver(loginSchema),
@@ -41,9 +43,12 @@ export default function LoginPage() {
             return response.data;
         },
         onSuccess: (data) => {
-            localStorage.setItem('token', data.access_token);
+            // На случай логина другим пользователем в этой же вкладке:
+            // чистим кэш и триггерим реактивные подписчики на токен.
+            queryClient.clear();
+            setAuthToken(data.access_token);
             toast.success('Login successful');
-            navigate('/');
+            navigate('/', { replace: true });
         },
         onError: () => {
             setError('Invalid username or password');

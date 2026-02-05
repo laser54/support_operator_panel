@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![Support operator](https://img.shields.io/badge/Support operator-Contact_Center-D4F62F?style=for-the-badge&logoColor=black)
+![Support Operator](https://img.shields.io/badge/Support_Operator-Contact_Center-D4F62F?style=for-the-badge&logoColor=black)
 
 **Современная веб-панель для операторов контакт-центра с AI-поиском по базе знаний и аналитикой в реальном времени**
 
