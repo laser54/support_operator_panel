@@ -56,18 +56,21 @@ jobs:
             set -e
             cd /opt/rag-stack
             
+            # Use override file for support-panel services
+            COMPOSE_FILES="-f docker-compose.yml -f docker-compose.support-panel.yml"
+            
             echo "Pulling images..."
-            timeout 300 docker compose pull support-panel-frontend support-panel-backend || echo "Pull failed or timeout, continuing..."
+            timeout 300 docker compose $COMPOSE_FILES pull support-panel-frontend support-panel-backend || echo "Pull failed or timeout, continuing..."
             
             echo "Starting services..."
-            docker compose up -d support-panel-frontend support-panel-backend support-panel-db
+            docker compose $COMPOSE_FILES up -d support-panel-frontend support-panel-backend support-panel-db
             
             echo "Waiting for services to start..."
             sleep 10
             
             # Run database migrations
             echo "Running migrations..."
-            docker compose exec -T support-panel-backend uv run alembic upgrade head || echo "Migration failed or already up to date"
+            docker compose $COMPOSE_FILES exec -T support-panel-backend uv run alembic upgrade head || echo "Migration failed or already up to date"
             
             # Status check
             echo "Service status:"
