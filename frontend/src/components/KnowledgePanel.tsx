@@ -5,7 +5,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Search, Copy, Check, Sparkles, ArrowRight, BookOpen, ChevronDown, Flame } from 'lucide-react';
+import { Search, Copy, Check, Sparkles, BookOpen, ChevronDown, Flame } from 'lucide-react';
 import { toast } from 'sonner';
 
 import type { ScriptSelection } from '@/components/ScriptSelector';
@@ -44,7 +44,7 @@ export const KnowledgePanel = forwardRef<KnowledgePanelRef, KnowledgePanelProps>
     const [searchQuery, setSearchQuery] = useState('');
     const [copiedId, setCopiedId] = useState<string | null>(null);
     const [topRange, setTopRange] = useState<TopRange>('recent');
-    const searchInputRef = useRef<HTMLInputElement>(null);
+    const searchInputRef = useRef<HTMLTextAreaElement>(null);
 
     // Ref для внешнего управления
     useImperativeHandle(ref, () => ({
@@ -152,7 +152,7 @@ export const KnowledgePanel = forwardRef<KnowledgePanelRef, KnowledgePanelProps>
                 <form onSubmit={handleSearch}>
                     <div className="relative">
                         <Textarea
-                            ref={searchInputRef as React.RefObject<HTMLTextAreaElement>}
+                            ref={searchInputRef}
                             placeholder="Опишите вопрос клиента..."
                             className="min-h-[72px] max-h-[120px] pr-28 resize-none text-sm leading-relaxed"
                             value={query}

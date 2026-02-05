@@ -79,7 +79,7 @@ const editUserSchema = z.object({
     password: z.string().min(4, 'Минимум 4 символа').optional().or(z.literal('')),
     role: z.enum(['operator', 'supervisor', 'admin']),
     is_active: z.boolean(),
-    role_override: z.enum(['none', 'supervisor', 'admin']),
+    role_override: z.enum(['none', 'operator', 'supervisor', 'admin']),
     role_override_until: z.string().optional().or(z.literal('')),
 });
 
@@ -164,11 +164,13 @@ export default function UsersPage() {
 
     // Update user mutation
     const updateMutation = useMutation({
-        mutationFn: async (payload: { userId: number; data: Partial<CreateUserForm> & {
-            role_override?: 'admin' | 'supervisor' | null;
-            role_override_until?: string | null;
-            is_active?: boolean;
-        } }) => {
+        mutationFn: async (payload: {
+            userId: number; data: Partial<CreateUserForm> & {
+                role_override?: 'operator' | 'admin' | 'supervisor' | null;
+                role_override_until?: string | null;
+                is_active?: boolean;
+            }
+        }) => {
             const response = await api.patch(`/users/${payload.userId}`, payload.data);
             return response.data;
         },
@@ -226,7 +228,7 @@ export default function UsersPage() {
             role: 'operator' | 'supervisor' | 'admin';
             is_active: boolean;
             password?: string;
-            role_override?: 'admin' | 'supervisor' | null;
+            role_override?: 'operator' | 'admin' | 'supervisor' | null;
             role_override_until?: string | null;
         } = {
             username: data.username,
@@ -354,12 +356,12 @@ export default function UsersPage() {
                                                             Оператор
                                                         </div>
                                                     </SelectItem>
-                                                <SelectItem value="supervisor">
-                                                    <div className="flex items-center gap-2">
-                                                        <Shield className="h-4 w-4" />
-                                                        Супервизор
-                                                    </div>
-                                                </SelectItem>
+                                                    <SelectItem value="supervisor">
+                                                        <div className="flex items-center gap-2">
+                                                            <Shield className="h-4 w-4" />
+                                                            Супервизор
+                                                        </div>
+                                                    </SelectItem>
                                                     <SelectItem value="admin">
                                                         <div className="flex items-center gap-2">
                                                             <Shield className="h-4 w-4" />

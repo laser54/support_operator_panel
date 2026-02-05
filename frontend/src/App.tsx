@@ -12,7 +12,7 @@ import UsersPage from '@/pages/UsersPage';
 import DirectoriesPage from '@/pages/DirectoriesPage';
 import ScriptsReviewPage from '@/pages/ScriptsReviewPage';
 
-function ProtectedRoute({ children }: { children: JSX.Element }) {
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const token = useAuthToken();
   if (!token) {
     return <Navigate to="/login" replace />;
