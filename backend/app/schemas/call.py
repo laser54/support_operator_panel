@@ -1,6 +1,24 @@
 from datetime import datetime
 from pydantic import BaseModel, ConfigDict
 from app.schemas.script import ScriptInput, ScriptRead
+from app.schemas.call_type import CallTypeRead
+from app.schemas.call_resolution import CallResolutionRead
+
+
+class RegionRead(BaseModel):
+    """Region info for call read."""
+    id: int
+    name: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class DepartmentRead(BaseModel):
+    """Department info for call read."""
+    id: int
+    name: str
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class CallBase(BaseModel):
@@ -55,5 +73,9 @@ class CallRead(CallBase):
     created_at: datetime
     operator: CallOperatorRead | None = None
     script: ScriptRead | None = None
+    call_type: CallTypeRead | None = None
+    resolution: CallResolutionRead | None = None
+    region: RegionRead | None = None
+    department: DepartmentRead | None = None
 
     model_config = ConfigDict(from_attributes=True)

@@ -35,12 +35,21 @@ async def create_call(
     )
     db.add(db_call)
     await db.commit()
-    await db.refresh(db_call)
-    if script_id:
-        # Manually set the script object to avoid lazy load error in Pydantic
-        db_call.script = script_obj
-    db_call.operator = current_user
-    return db_call
+    
+    # Reload with all relationships
+    result = await db.execute(
+        select(Call)
+        .where(Call.id == db_call.id)
+        .options(
+            selectinload(Call.script),
+            selectinload(Call.operator),
+            selectinload(Call.call_type),
+            selectinload(Call.resolution),
+            selectinload(Call.region),
+            selectinload(Call.department),
+        )
+    )
+    return result.scalar_one()
 
 
 @router.get("/", response_model=list[CallRead])
@@ -57,7 +66,14 @@ async def list_calls(
     max_duration: int | None = None,
 ) -> list[Call]:
     """List calls for the current operator (or all for admin)."""
-    query = select(Call).options(selectinload(Call.script), selectinload(Call.operator))
+    query = select(Call).options(
+        selectinload(Call.script),
+        selectinload(Call.operator),
+        selectinload(Call.call_type),
+        selectinload(Call.resolution),
+        selectinload(Call.region),
+        selectinload(Call.department),
+    )
 
     if not current_user.has_admin_rights():
         query = query.where(Call.operator_id == current_user.id)
@@ -105,7 +121,14 @@ async def update_call(
     result = await db.execute(
         select(Call)
         .where(Call.id == call_id)
-        .options(selectinload(Call.script), selectinload(Call.operator))
+        .options(
+            selectinload(Call.script),
+            selectinload(Call.operator),
+            selectinload(Call.call_type),
+            selectinload(Call.resolution),
+            selectinload(Call.region),
+            selectinload(Call.department),
+        )
     )
     db_call = result.scalar_one_or_none()
     if not db_call:
@@ -125,5 +148,18 @@ async def update_call(
         setattr(db_call, key, value)
 
     await db.commit()
-    await db.refresh(db_call)
-    return db_call
+    
+    # Reload with all relationships (in case call_type_id or resolution_id changed)
+    result = await db.execute(
+        select(Call)
+        .where(Call.id == call_id)
+        .options(
+            selectinload(Call.script),
+            selectinload(Call.operator),
+            selectinload(Call.call_type),
+            selectinload(Call.resolution),
+            selectinload(Call.region),
+            selectinload(Call.department),
+        )
+    )
+    return result.scalar_one()

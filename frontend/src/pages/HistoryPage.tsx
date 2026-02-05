@@ -31,7 +31,7 @@ import {
 } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { format } from 'date-fns';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Eye, Pencil } from 'lucide-react';
 import { toast } from 'sonner';
 import {
     useReactTable,
@@ -160,6 +160,8 @@ export default function HistoryPage() {
     const [filters, setFilters] = useState<CallFilters>(defaultFilters);
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [editForm, setEditForm] = useState<EditCallForm | null>(null);
+    const [isViewOpen, setIsViewOpen] = useState(false);
+    const [viewCall, setViewCall] = useState<Call | null>(null);
     const queryClient = useQueryClient();
     const { data: currentUser } = useCurrentUser();
     const isPrivileged = currentUser?.effective_role !== 'operator';
@@ -221,6 +223,11 @@ export default function HistoryPage() {
             duration_seconds: call.duration_seconds === null ? '' : String(call.duration_seconds),
         });
         setIsEditOpen(true);
+    }, []);
+
+    const openView = useCallback((call: Call) => {
+        setViewCall(call);
+        setIsViewOpen(true);
     }, []);
 
     const columns = useMemo(() => {
@@ -313,13 +320,24 @@ export default function HistoryPage() {
                 id: 'actions',
                 header: '',
                 cell: (info) => (
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => openEdit(info.row.original)}
-                    >
-                        Редактировать
-                    </Button>
+                    <div className="flex gap-1">
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => openView(info.row.original)}
+                            title="Подробнее"
+                        >
+                            <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => openEdit(info.row.original)}
+                            title="Редактировать"
+                        >
+                            <Pencil className="h-4 w-4" />
+                        </Button>
+                    </div>
                 ),
             }),
         ];
@@ -339,7 +357,7 @@ export default function HistoryPage() {
         }
 
         return cols;
-    }, [isPrivileged, openEdit]);
+    }, [isPrivileged, openEdit, openView]);
 
     const table = useReactTable({
         data: calls || [],
@@ -613,6 +631,145 @@ export default function HistoryPage() {
                         </Button>
                         <Button onClick={handleSaveEdit} disabled={updateMutation.isPending}>
                             {updateMutation.isPending ? 'Сохраняю...' : 'Сохранить'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* View Details Dialog */}
+            <Dialog
+                open={isViewOpen}
+                onOpenChange={(open) => {
+                    setIsViewOpen(open);
+                    if (!open) {
+                        setViewCall(null);
+                    }
+                }}
+            >
+                <DialogContent className="max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
+                    <DialogHeader>
+                        <DialogTitle>Подробности звонка #{viewCall?.id}</DialogTitle>
+                    </DialogHeader>
+                    {viewCall && (
+                        <div className="grid gap-4 overflow-y-auto pr-2 flex-1 min-h-0">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <Label className="text-muted-foreground text-xs">Дата и время</Label>
+                                    <p className="font-medium">
+                                        {format(new Date(viewCall.created_at), 'dd.MM.yyyy HH:mm:ss')}
+                                    </p>
+                                </div>
+                                <div>
+                                    <Label className="text-muted-foreground text-xs">Длительность</Label>
+                                    <p className="font-medium">
+                                        {viewCall.duration_seconds !== null
+                                            ? formatDuration(viewCall.duration_seconds)
+                                            : '-'}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <Label className="text-muted-foreground text-xs">Звонивший</Label>
+                                    <p className="font-medium">{viewCall.caller_name || '-'}</p>
+                                    {viewCall.caller_phone && (
+                                        <p className="text-sm text-muted-foreground">{viewCall.caller_phone}</p>
+                                    )}
+                                    {viewCall.caller_gender && (
+                                        <p className="text-sm text-muted-foreground">Пол: {viewCall.caller_gender}</p>
+                                    )}
+                                </div>
+                                <div>
+                                    <Label className="text-muted-foreground text-xs">Оператор</Label>
+                                    <p className="font-medium">
+                                        {viewCall.operator?.username || `#${viewCall.operator_id}`}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <Label className="text-muted-foreground text-xs">Тип звонка</Label>
+                                    {viewCall.call_type ? (
+                                        <Badge variant={getCallTypeColor(viewCall.call_type.name)} className="mt-1">
+                                            {viewCall.call_type.name}
+                                        </Badge>
+                                    ) : (
+                                        <p className="text-muted-foreground">-</p>
+                                    )}
+                                </div>
+                                <div>
+                                    <Label className="text-muted-foreground text-xs">Результат</Label>
+                                    {viewCall.resolution ? (
+                                        <Badge variant={getResolutionColor(viewCall.resolution.name)} className="mt-1">
+                                            {viewCall.resolution.name}
+                                        </Badge>
+                                    ) : (
+                                        <p className="text-muted-foreground">-</p>
+                                    )}
+                                </div>
+                            </div>
+
+                            {(viewCall.region || viewCall.department) && (
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <Label className="text-muted-foreground text-xs">Регион</Label>
+                                        <p className="font-medium">{viewCall.region?.name || '-'}</p>
+                                    </div>
+                                    <div>
+                                        <Label className="text-muted-foreground text-xs">Отдел</Label>
+                                        <p className="font-medium">{viewCall.department?.name || '-'}</p>
+                                    </div>
+                                </div>
+                            )}
+
+                            <div>
+                                <Label className="text-muted-foreground text-xs">Вопрос</Label>
+                                <div className="mt-1 p-3 bg-muted/50 rounded-md whitespace-pre-wrap">
+                                    {viewCall.question}
+                                </div>
+                            </div>
+
+                            <div>
+                                <Label className="text-muted-foreground text-xs">Ответ / Решение</Label>
+                                {viewCall.script?.answer ? (
+                                    <div className="mt-1 p-3 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-900 rounded-md whitespace-pre-wrap text-green-800 dark:text-green-200">
+                                        <span className="text-xs text-green-600 dark:text-green-400 block mb-1">Из скрипта:</span>
+                                        {viewCall.script.answer}
+                                    </div>
+                                ) : viewCall.solution ? (
+                                    <div className="mt-1 p-3 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900 rounded-md whitespace-pre-wrap text-blue-800 dark:text-blue-200">
+                                        {viewCall.solution}
+                                    </div>
+                                ) : (
+                                    <p className="text-muted-foreground mt-1">-</p>
+                                )}
+                            </div>
+
+                            {viewCall.notes && (
+                                <div>
+                                    <Label className="text-muted-foreground text-xs">Заметки оператора</Label>
+                                    <div className="mt-1 p-3 bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-900 rounded-md whitespace-pre-wrap">
+                                        {viewCall.notes}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsViewOpen(false)}>
+                            Закрыть
+                        </Button>
+                        <Button
+                            onClick={() => {
+                                setIsViewOpen(false);
+                                if (viewCall) {
+                                    openEdit(viewCall);
+                                }
+                            }}
+                        >
+                            Редактировать
                         </Button>
                     </DialogFooter>
                 </DialogContent>
