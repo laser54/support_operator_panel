@@ -1,5 +1,19 @@
 # Support Operator Panel
 
+> **Applied support-workflow prototype** — an operator-facing web panel that connects calls, roles and analytics with a separate [semantic retrieval and reranking component](https://github.com/laser54/assist-craft-qna) for knowledge-base answers.
+
+## Case overview
+
+**Problem.** Contact-centre operators need relevant scripts and operational context without switching between disconnected tools during a call.
+
+**Workflow.** Operator UI → FastAPI API → knowledge-base retrieval service → embed → retrieve → rerank → suggested material in the operator workflow.
+
+**My contribution.** I worked on the operator workflow and product engineering across the FastAPI/PostgreSQL backend, API integration, roles, calls and retrieval-oriented support tooling.
+
+**Status and boundary.** This is a validated workflow / functional prototype, not a corporate production deployment. The workflow was tested by its owner; planned corporate rollout did not proceed because of information-security requirements. Use only synthetic or properly authorized support data.
+
+See [assist-craft-qna](https://github.com/laser54/assist-craft-qna) for the public retrieval component. The two repositories deliberately use different stacks and form one umbrella case rather than a single application.
+
 <div align="center">
 
 ![Support Operator](https://img.shields.io/badge/Support_Operator-Contact_Center-D4F62F?style=for-the-badge&logoColor=black)
@@ -28,7 +42,7 @@
 
 ### 🎯 Удобство для операторов
 - **Продуманный UX/UI** — чистый интерфейс, где форма звонка и подсказки интегрированы в одно рабочее окно
-- **Умный AI-поиск** — интеллектуальный поиск нужных скриптов и руководств по ключевым словам или смыслу за секунду
+- **Поиск по базе знаний** — поиск нужных скриптов и руководств по ключевым словам или смыслу
 - **Автоматизация рутины** — таймер звонка запускается сам, а шаблоны подсказывают готовые ответы
 - **Топ актуальных вопросов** — всегда под рукой статистика по частым проблемам клиентов
 - **Горячие клавиши** — управление без мышки: `Ctrl+Enter` сохранить, `Ctrl+S` поиск по базе
@@ -133,11 +147,7 @@ docker-compose exec backend uv run python load_fixtures.py
 | 📚 API Docs | http://localhost:8000/docs |
 | 🔧 API Health | http://localhost:8000/ |
 
-**Тестовый вход:**
-```
-Username: admin
-Password: admin
-```
+**Локальный доступ:** создайте отдельного администратора командой выше. Не используйте общие или предустановленные учётные данные в публичном развёртывании.
 
 ---
 
