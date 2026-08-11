@@ -12,6 +12,45 @@
 
 **Status and boundary.** This is a validated workflow / functional prototype, not a corporate production deployment. The workflow was tested by its owner; planned corporate rollout did not proceed because of information-security requirements. Use only synthetic or properly authorized support data.
 
+### Architecture diagram
+
+```mermaid
+flowchart TD
+    subgraph Client ["Operator Workspace (React 19 / TypeScript)"]
+        UI["Operator Interface (HomePage)"]
+        Form["Call Form & Live Timer"]
+        KBPanel["Knowledge Search Box (Ctrl+S)"]
+    end
+
+    subgraph Backend ["FastAPI Core Services (Python 3.12)"]
+        Auth["JWT Auth & RBAC"]
+        CallAPI["Call & Analytics API"]
+        SearchAPI["Knowledge Search Integration"]
+    end
+
+    subgraph Retrieval ["Semantic Subsystem (assist-craft-qna)"]
+        RetrievalAPI["Retrieval & Rerank API"]
+        Embedder["Vector Search (Embeddings)"]
+        Reranker["Cross-Encoder Reranker"]
+        KB[("Knowledge Base Store")]
+    end
+
+    subgraph Storage ["Persistence Layer"]
+        PG[("PostgreSQL 16 (Calls, Users, Scripts, Audit)")]
+    end
+
+    UI -->|"1. User Action"| Auth
+    Form -->|"2. Log Call (Ctrl+Enter)"| CallAPI
+    CallAPI -->|"3. Save & Audit"| PG
+    KBPanel -->|"4. Query Knowledge Base"| SearchAPI
+    SearchAPI -->|"5. HTTP Request"| RetrievalAPI
+    RetrievalAPI --> Embedder
+    Embedder --> KB
+    Embedder -->|"Candidate Documents"| Reranker
+    Reranker -->|"6. Ranked Results & Scores"| SearchAPI
+    SearchAPI -->|"7. Render Suggestions"| KBPanel
+```
+
 See [assist-craft-qna](https://github.com/laser54/assist-craft-qna) for the public retrieval component. The two repositories deliberately use different stacks and form one umbrella case rather than a single application.
 
 <div align="center">
