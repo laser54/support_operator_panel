@@ -15,11 +15,13 @@ Existing production migration, no invented DEV. Resource `pt4yigwrdmzcjuvokw4c0x
 
 ## Migration status / acceptance
 
-Initial pg_dump restored transactionally into the empty destination database. All 8 table row counts and ordered-row fingerprints match the initial old-VPS snapshot: 2 users, 7 calls, 4 scripts. Existing-user JWT `/auth/me` and trusted-TLS Q&A login/search passed. This is not a password-login test.
+Protected cutover completed 2026-10-02. Both writers were gated during final sync: the old backend was stopped, the new backend temporarily ran a maintenance command through Coolify. Final pg_dump restored transactionally; all 8 table fingerprints, sequences and Alembic revision matched: 2 users, 7 calls, 4 scripts. Old backend remains stopped; old DB/volumes are retained.
 
-DNS is still on the old VPS. New routing has only been tested with forced address and certificate verification disabled because ACME is intentionally disabled before cutover. Trusted public TLS is NOT yet accepted.
+Only A record `support.larin.work` changed to `38.45.65.134`; API readback and all four authoritative DNS verified, unrelated records unchanged. ACME was enabled after authoritative propagation. Normal public DNS and trusted HTTPS are accepted: frontend/assets, health, existing-user JWT `/auth/me`, calls and Q&A search all passed. This is not a password-login test. Native push delivery is verified (`is_webhook=true`, expected SHA, finished, running:healthy).
 
-## Protected cutover (requires separate approval)
+Credentials are retained in Bitwarden Secrets Manager as `SUPPORT_PANEL_PROD_POSTGRES_PASSWORD`, `SUPPORT_PANEL_PROD_SECRET_KEY`, `SUPPORT_PANEL_PROD_DATABASE_URL`; Q&A password uses existing `QNA_PROD_PORTAL_PASSWORD`. Secret values are not in source. Final backup is retained on both VPS, matching SHA256 `96228d47ed0b46f9989ccd844fb917eab64878d887b29af46e87824d43fb7bab`.
+
+## Protected cutover procedure (future migrations require approval)
 
 1. Pause writes by stopping only the old Support Panel backend; preserve PostgreSQL and old volumes.
 2. Obtain a final pg_dump and table fingerprints while the old writer is stopped.
