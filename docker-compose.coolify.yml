@@ -1,0 +1,99 @@
+# Existing production migration. PostgreSQL image is pinned to the old runtime release.
+# ACME is deliberately disabled until DNS cutover; add resolver labels only after approval.
+services:
+  support-panel-db:
+    image: postgres@sha256:4327b9fd295502f326f44153a1045a7170ddbfffed1c3829798328556cfd09e2
+    restart: unless-stopped
+    networks: [internal]
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      POSTGRES_DB: support_panel
+      POSTGRES_USER: postgres
+      DATABASE_URL: ""
+      SECRET_KEY: ""
+      KNOWLEDGE_BASE_PASSWORD: ""
+    volumes:
+      - support-panel-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d support_panel"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  support-panel-backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    networks: [internal, coolify]
+    expose: ["8000"]
+    depends_on:
+      support-panel-db:
+        condition: service_healthy
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      APP_ENV: production
+      FRONTEND_URL: https://support.larin.work
+      KNOWLEDGE_BASE_URL: https://qa.larin.work
+      POSTGRES_PASSWORD: ""
+    healthcheck:
+      test: ["CMD", "/app/.venv/bin/python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health',timeout=3)"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=coolify
+      - traefik.http.routers.supportpanel-api-http.rule=Host(`support.larin.work`) && PathPrefix(`/api`)
+      - traefik.http.routers.supportpanel-api-http.entrypoints=http
+      - traefik.http.routers.supportpanel-api-http.priority=100
+      - traefik.http.routers.supportpanel-api-http.middlewares=redirect-to-https@file
+      - traefik.http.routers.supportpanel-api-http.service=supportpanel-api
+      - traefik.http.routers.supportpanel-api-https.rule=Host(`support.larin.work`) && PathPrefix(`/api`)
+      - traefik.http.routers.supportpanel-api-https.entrypoints=https
+      - traefik.http.routers.supportpanel-api-https.priority=100
+      - traefik.http.routers.supportpanel-api-https.tls=true
+      - traefik.http.routers.supportpanel-api-https.service=supportpanel-api
+      - traefik.http.services.supportpanel-api.loadbalancer.server.port=8000
+
+  support-panel-frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: /api/v1
+    restart: unless-stopped
+    networks: [coolify]
+    expose: ["80"]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1/health || exit 1"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=coolify
+      - traefik.http.routers.supportpanel-web-http.rule=Host(`support.larin.work`)
+      - traefik.http.routers.supportpanel-web-http.entrypoints=http
+      - traefik.http.routers.supportpanel-web-http.middlewares=redirect-to-https@file
+      - traefik.http.routers.supportpanel-web-http.service=supportpanel-web
+      - traefik.http.routers.supportpanel-web-https.rule=Host(`support.larin.work`)
+      - traefik.http.routers.supportpanel-web-https.entrypoints=https
+      - traefik.http.routers.supportpanel-web-https.tls=true
+      - traefik.http.routers.supportpanel-web-https.service=supportpanel-web
+      - traefik.http.services.supportpanel-web.loadbalancer.server.port=80
+
+networks:
+  internal:
+    internal: true
+  coolify:
+    external: true
+volumes:
+  support-panel-db-data:

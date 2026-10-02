@@ -6,7 +6,7 @@ class KnowledgeBaseService:
     def __init__(self):
         self.base_url = settings.KNOWLEDGE_BASE_URL.rstrip('/')
         self.password = settings.KNOWLEDGE_BASE_PASSWORD
-        self.client = httpx.AsyncClient(timeout=10.0, verify=False) # Skip SSL check for QA if needed
+        self.client = httpx.AsyncClient(timeout=10.0)  # Verify the Q&A certificate and hostname.
         self.cookies: Optional[httpx.Cookies] = None
 
     async def _login(self):
