@@ -1,5 +1,5 @@
 # Existing production migration. PostgreSQL image is pinned to the old runtime release.
-# ACME is deliberately disabled until DNS cutover; add resolver labels only after approval.
+# ACME enabled after protected DNS cutover and authoritative verification.
 services:
   support-panel-db:
     image: postgres@sha256:4327b9fd295502f326f44153a1045a7170ddbfffed1c3829798328556cfd09e2
@@ -24,8 +24,6 @@ services:
       start_period: 30s
 
   support-panel-backend:
-    # Temporary cutover gate: no application process can accept writes.
-    command: ["/app/.venv/bin/python", "-c", "import time; time.sleep(86400)"]
     build:
       context: ./backend
       dockerfile: Dockerfile
@@ -61,6 +59,7 @@ services:
       - traefik.http.routers.supportpanel-api-https.entrypoints=https
       - traefik.http.routers.supportpanel-api-https.priority=100
       - traefik.http.routers.supportpanel-api-https.tls=true
+      - traefik.http.routers.supportpanel-api-https.tls.certresolver=letsencrypt
       - traefik.http.routers.supportpanel-api-https.service=supportpanel-api
       - traefik.http.services.supportpanel-api.loadbalancer.server.port=8000
 
@@ -89,6 +88,7 @@ services:
       - traefik.http.routers.supportpanel-web-https.rule=Host(`support.larin.work`)
       - traefik.http.routers.supportpanel-web-https.entrypoints=https
       - traefik.http.routers.supportpanel-web-https.tls=true
+      - traefik.http.routers.supportpanel-web-https.tls.certresolver=letsencrypt
       - traefik.http.routers.supportpanel-web-https.service=supportpanel-web
       - traefik.http.services.supportpanel-web.loadbalancer.server.port=80
 
